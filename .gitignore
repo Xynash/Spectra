@@ -1,0 +1,16 @@
+# Secrets
+.env
+backend/.env
+
+# Heavy Dependencies
+node_modules/
+frontend/node_modules/
+backend/venv/
+backend/.venv/
+__pycache__/
+
+# Build files
+.next/
+frontend/.next/
+out/
+build/

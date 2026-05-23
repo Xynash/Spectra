@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #FCFAF7; /* The Designjoy Warm White */
+  --ink: #111111;
+  --accent: #FF4D00;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* Hard Brutalist Shadows */
+.dj-shadow {
+  box-shadow: 10px 10px 0px 0px rgba(0,0,0,1);
+}
+
+.dj-shadow-sm {
+  box-shadow: 5px 5px 0px 0px rgba(0,0,0,1);
+}
+
+/* Ticker Animation */
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+}
+
+/* Dot Pattern Overlay */
+.bg-dots {
+  background-image: radial-gradient(#d1d1d1 1.5px, transparent 1.5px);
+  background-size: 26px 26px;
+}
