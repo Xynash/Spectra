@@ -8,7 +8,10 @@ import { Search, ArrowRight, Zap, Code, Layers, Sparkles, Rocket, Star, Cpu, Moo
 
 const TechTicker = dynamic(() => import('../components/TechTicker'), { ssr: false });
 const ProjectRow = dynamic(() => import('../components/ProjectRow'), { ssr: false });
-const Sentinel = dynamic(() => import('../components/Sentinel'), { ssr: false });
+const Sentinel = dynamic(() => import('../components/Sentinel'), { 
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-emerald-100 animate-pulse rounded-full border-2 border-black" />
+});
 
 const GithubIcon = ({ size = 24 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -28,7 +31,9 @@ export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  
   const setRevelationData = useStore((state) => state.setRevelationData);
+  const setActiveRepoUrl = useStore((state) => state.setActiveRepoUrl);
 
   useEffect(() => {
     if (isDark) document.documentElement.classList.add('dark');
@@ -38,6 +43,8 @@ export default function Home() {
   const handleAnalyze = async () => {
     if (!repoUrl) return alert("Paste a GitHub URL first.");
     setLoading(true);
+    setActiveRepoUrl(repoUrl); // Save URL for Chat context
+
     try {
       const res = await fetch("http://localhost:8000/analyze", {
         method: "POST",
@@ -49,11 +56,7 @@ export default function Home() {
         setRevelationData(data.graph);
         router.push('/reveal');
       } else {
-        // FALLBACK FOR 429 ERRORS
-        setRevelationData({
-          nodes: [{ id: '1', data: { label: 'Repository Root', layer: 'infra' }, position: { x: 250, y: 0 } }, { id: '2', data: { label: 'Logic Layer', layer: 'logic' }, position: { x: 250, y: 150 } }],
-          edges: [{ id: 'e1-2', source: '1', target: '2', animated: true }]
-        });
+        setRevelationData(null);
         router.push('/reveal');
       }
     } catch (err) { alert("Backend offline."); } finally { setLoading(false); }
@@ -66,7 +69,7 @@ export default function Home() {
       <div className={`fixed top-40 right-10 opacity-20 transition-colors ${isDark ? "text-purple-600" : "text-amber-400"}`}><Sparkles size={120} /></div>
 
       <nav className="w-full max-w-6xl flex items-center justify-between px-10 py-6 z-50">
-        <div className="flex items-center space-x-3 group">
+        <div className="flex items-center space-x-3 group cursor-pointer">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center dj-shadow-sm border-2 border-black transition-all ${isDark ? "bg-white text-black" : "bg-black text-white"}`}><GithubIcon size={24} /></div>
           <span className="font-black text-3xl tracking-tighter uppercase">SPECTRA.</span>
         </div>
@@ -76,22 +79,21 @@ export default function Home() {
         </div>
         <div className="flex items-center space-x-4">
           <button onClick={() => setIsDark(!isDark)} className={`p-3 border-2 border-black rounded-xl dj-shadow-sm transition-all ${isDark ? "bg-zinc-800 text-yellow-400" : "bg-white text-black"}`}>{isDark ? <Sun size={20} /> : <Moon size={20} />}</button>
-          <Link href="/explore" className={`px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest dj-shadow-sm transition-all ${isDark ? "bg-purple-600 text-white" : "bg-black text-white"}`}>Explore Repos</Link>
+          <button className={`px-8 py-3 rounded-full font-black text-[10px] uppercase tracking-widest dj-shadow-sm transition-all ${isDark ? "bg-purple-600 text-white" : "bg-black text-white"}`}>Analyze</button>
         </div>
       </nav>
 
       <section className="text-center px-4 max-w-6xl mt-20 mb-32 z-10 flex flex-col items-center">
-        <h1 className="text-7xl md:text-[9rem] font-black tracking-tighter leading-[0.8] mb-10 uppercase text-center">
+        <h1 className="text-7xl md:text-[9rem] font-black tracking-tighter leading-[0.8] mb-10 uppercase">
           A codebase <br /> intelligence <br /> 
           <span className="flex items-center justify-center flex-wrap">with a <div className="inline-block w-28 h-28 md:w-40 md:h-40 mx-6 translate-y-4"><Sentinel /></div><span className={`${isDark ? "text-purple-500" : "text-emerald-500"} italic underline decoration-black decoration-8 px-4 transition-colors`}>twist.</span></span>
         </h1>
-        <p className={`text-xl md:text-3xl font-medium max-w-3xl mx-auto mb-16 mt-20 leading-relaxed italic ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>"The ultimate repo intelligence for everyone. <br /> Map, learn, and contribute—seamlessly."</p>
+        <p className={`text-xl md:text-3xl font-medium max-w-3xl mx-auto mb-16 mt-20 leading-relaxed italic transition-colors ${isDark ? "text-zinc-500" : "text-zinc-400"}`}>"The ultimate repo intelligence for everyone. <br /> Map, learn, and contribute—seamlessly."</p>
 
-        {/* CENTERED SEARCH BAR */}
         <div className="w-full max-w-3xl relative group mb-10">
           <div className={`border-4 border-black p-6 rounded-[2.5rem] dj-shadow flex items-center transition-all group-focus-within:-translate-y-2 ${isDark ? "bg-zinc-900" : "bg-white"}`}>
             <Search className="ml-4 text-zinc-400" size={32} />
-            <input value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} placeholder="Paste GitHub Repository URL..." className={`flex-1 bg-transparent border-none outline-none px-6 font-bold text-2xl transition-colors ${isDark ? "text-white" : "text-black"}`} />
+            <input value={repoUrl} onChange={(e) => setRepoUrl(e.target.value)} placeholder="Paste GitHub Repository URL..." className={`flex-1 bg-transparent border-none outline-none px-6 font-bold text-2xl placeholder:text-zinc-300 transition-colors ${isDark ? "text-white" : "text-black"}`} />
             <button onClick={handleAnalyze} disabled={loading} className={`border-2 border-black px-12 py-5 rounded-2xl font-black text-black hover:scale-105 transition-all text-xl flex items-center gap-3 ${isDark ? "bg-purple-600" : "bg-emerald-500"} disabled:opacity-50`}>
                {loading ? <Loader2 className="animate-spin" /> : <Rocket size={24} />}
                <span>{loading ? "SCANNING" : "ANALYZE"}</span>
@@ -103,8 +105,12 @@ export default function Home() {
       <div className="w-full mb-40 mt-10"><TechTicker /></div>
 
       <section className={`w-full py-40 border-y-4 border-black transition-colors relative overflow-hidden ${isDark ? "bg-zinc-900/50" : "bg-[#F3F1EE]"}`}>
-        <div className="max-w-6xl mx-auto px-10 mb-20 text-center">
-            <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase mb-4">Latest <span className={isDark ? "text-purple-500" : "text-emerald-500"}>Revelations.</span></h2>
+        <div className={`absolute top-20 right-[15%] hidden lg:block rotate-12 opacity-30 transition-colors ${isDark ? "invert" : ""}`}>
+          <svg width="150" height="100" viewBox="0 0 150 100" fill="none" stroke="black" strokeWidth="4" strokeLinecap="round"><path d="M10 10C50 10 140 10 140 90M140 90L130 75M140 90L148 75" /></svg>
+          <p className="font-serif italic text-black font-black text-xl mt-4 ml-10">Pick a project</p>
+        </div>
+        <div className="max-w-6xl mx-auto px-10 mb-20 text-center relative z-10">
+            <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase mb-4 transition-colors">Latest <span className={isDark ? "text-purple-500" : "text-emerald-500"}>Revelations.</span></h2>
             <p className="text-zinc-500 font-bold uppercase tracking-[0.4em] text-[10px]">Architectural index of the open source galaxy</p>
         </div>
         <ProjectRow projects={LANDING_PROJECTS} />
@@ -125,9 +131,9 @@ export default function Home() {
          </div>
       </section>
 
-      <footer className={`w-full border-t-4 border-black py-24 flex flex-col items-center transition-colors ${isDark ? "bg-[#050505]" : "bg-white"}`}>
+      <footer className={`w-full border-t-4 border-black py-24 flex flex-col items-center transition-colors relative z-10 ${isDark ? "bg-[#050505]" : "bg-white"}`}>
          <div className={`p-6 rounded-3xl dj-shadow-sm mb-12 border-2 border-black ${isDark ? "bg-white text-black" : "bg-black text-white"}`}><GithubIcon size={48} /></div>
-         <span className="font-black text-xs uppercase tracking-[1em] opacity-30 text-center">SPECTRA // 2025</span>
+         <span className="font-black text-xs uppercase tracking-[1em] opacity-30 text-center">SPECTRA // THE ONBOARDING STANDARD // 2025</span>
       </footer>
     </main>
   );
