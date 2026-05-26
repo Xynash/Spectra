@@ -13,11 +13,11 @@ IGNORED_EXTENSIONS = {
     ".ttf", ".eot", ".map", ".pyc", ".DS_Store", ".pdf", ".zip", ".tar", ".gz"
 }
 
-MAX_FILES = 280  # Safe buffer under Gemini Flash's context limit
+MAX_FILES = 280
 
 class DNAIngestor:
     def __init__(self):
-        self.token = os.getenv("GITHUB_PAT")  # Add to your .env
+        self.token = os.getenv("GITHUB_PAT")
 
     def _get_headers(self):
         headers = {"Accept": "application/vnd.github.v3+json"}
@@ -53,7 +53,6 @@ class DNAIngestor:
         return paths
 
     def build_fallback_map(self, repo_url: str, file_paths: list[str]) -> dict:
-        """Called when GitHub succeeds but Gemini fails — uses real paths."""
         parts = repo_url.rstrip("/").split("/")
         repo_name = parts[-1] if parts else "unknown-repo"
         owner = parts[-2] if len(parts) >= 2 else "unknown"
@@ -64,16 +63,20 @@ class DNAIngestor:
             key = "[root]" if len(segments) == 1 else segments[0]
             groups[key].append(path)
 
-        nodes = [{"id": "root", "label": repo_name, "type": "repository"}]
+        nodes = [{"id": "root", "data": {"label": repo_name.upper(), "layer": "core", "tier": 0, "description": f"Root of {owner}/{repo_name}"}}]
         edges = []
-        for group, files in groups.items():
-            nid = f"group_{group}"
+        for i, (group, files) in enumerate(groups.items()):
+            nid = f"group_{i}"
             nodes.append({
-                "id": nid, "label": group,
-                "type": "directory", "file_count": len(files),
-                "sample_files": files[:5]
+                "id": nid,
+                "data": {
+                    "label": group.upper(),
+                    "layer": "logic",
+                    "tier": 1,
+                    "description": f"{len(files)} files in /{group}"
+                }
             })
-            edges.append({"source": "root", "target": nid})
+            edges.append({"source": "root", "target": nid, "label": "CONTAINS"})
 
         return {
             "repo": f"{owner}/{repo_name}",
@@ -89,10 +92,11 @@ class DNAIngestor:
             owner, repo = parts[-2], parts[-1]
             api_url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/HEAD?recursive=1"
 
-            async with httpx.AsyncClient(timeout=20) as client:
+            # ✅ follow_redirects=True fixes the 301 error
+            async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
                 response = await client.get(api_url, headers=self._get_headers())
 
-            if response.status_code == 403 or response.status_code == 429:
+            if response.status_code in (403, 429):
                 remaining = response.headers.get("X-RateLimit-Remaining", "0")
                 return {"error": "GITHUB_RATE_LIMIT", "remaining": remaining}
 
@@ -103,7 +107,7 @@ class DNAIngestor:
                 contents = response.json()
                 pruned = self._prune_tree(contents.get("tree", []))
                 print(f"✅ Found {len(pruned)} top-level pillars.")
-                return {"paths": pruned, "repo_url": repo_url}  # ← return paths separately
+                return {"paths": pruned, "repo_url": repo_url}
 
             return {"error": f"GITHUB_API_ERROR_{response.status_code}"}
 
