@@ -10,12 +10,13 @@ import SpectraNode from "../../components/SpectraNode";
 import {
   ArrowLeft, BookOpen, Target, MessageSquare, X, Loader2,
   ShieldCheck, RefreshCw, GitBranch, Zap, AlertTriangle,
-  FileCode, Users, Lightbulb, Rocket, Brain, Star, ChevronRight,
+  Send, ChevronDown, ChevronRight, Star, Rocket, Brain,
+  FileCode, Users, Lightbulb, CheckCircle, Circle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-// ─── Edge style ───────────────────────────────────────────────────────────────
+// ─── Edge styles ──────────────────────────────────────────────────────────────
 const defaultEdgeOptions = {
   type: "smoothstep", animated: true,
   style: { stroke: "#94a3b8", strokeWidth: 2, opacity: 0.7 },
@@ -59,13 +60,7 @@ const TIER_META = [
   { tier: 3, label: "Tier 3 · Execution DNA",  color: "bg-zinc-800"    },
 ];
 
-const COMPLEXITY_CONFIG = {
-  beginner:     { color: "bg-emerald-100 text-emerald-700 border-emerald-200", label: "Beginner Friendly" },
-  intermediate: { color: "bg-amber-100 text-amber-700 border-amber-200",       label: "Intermediate"      },
-  advanced:     { color: "bg-red-100 text-red-700 border-red-200",             label: "Advanced"          },
-};
-
-// ─── No data screen ───────────────────────────────────────────────────────────
+// ─── No data ──────────────────────────────────────────────────────────────────
 function NoDataScreen() {
   const router = useRouter();
   return (
@@ -76,7 +71,7 @@ function NoDataScreen() {
         </div>
         <h2 className="font-black text-2xl text-zinc-800 uppercase tracking-tighter">No Analysis Yet</h2>
         <p className="text-sm text-zinc-400 font-medium leading-relaxed">
-          Paste a GitHub URL on the home page and hit Analyze to generate your architectural map.
+          Paste a GitHub URL on the home page and hit Analyze to generate your map.
         </p>
       </div>
       <button onClick={() => router.push("/")}
@@ -87,161 +82,390 @@ function NoDataScreen() {
   );
 }
 
-// ─── Node Explain Panel ───────────────────────────────────────────────────────
-function NodeExplainPanel({ nodeData, repoUrl, onClose }) {
-  const [loading,     setLoading]     = useState(true);
-  const [explanation, setExplanation] = useState(null);
-  const [error,       setError]       = useState(null);
+// ─── GUIDE PANEL ─────────────────────────────────────────────────────────────
+function GuidePanel({ onClose, repoName, activeRepoUrl, nodes }) {
+  const [guide,   setGuide]   = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [checked, setChecked] = useState({});
 
   useEffect(() => {
-    if (!nodeData) return;
+    if (!activeRepoUrl) return;
     setLoading(true);
-    setError(null);
-    setExplanation(null);
 
-    fetch("http://localhost:8000/explain", {
+    const domainNodes = nodes
+      .filter(n => (n.data?.tier ?? 0) >= 1)
+      .slice(0, 12)
+      .map(n => `${n.data?.label} (${n.data?.layer}): ${n.data?.description}`)
+      .join("\n");
+
+    fetch("http://localhost:8000/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        node_label:       nodeData.label,
-        node_description: nodeData.description || "",
-        node_layer:       nodeData.layer || "logic",
-        node_tier:        nodeData.tier ?? 1,
-        repo_url:         repoUrl,
+        repo_url: activeRepoUrl,
+        message: `You are a senior developer helping a complete newcomer understand the "${repoName}" repository.
+
+Here are the key components of this repo:
+${domainNodes}
+
+Generate a thorough onboarding guide in plain, friendly English. Return ONLY a JSON object with this shape:
+{
+  "repo_summary": "2-3 sentences: what this project does, who uses it, and why it matters in the real world.",
+  "tech_stack": ["technology1", "technology2", "technology3"],
+  "difficulty": "Beginner / Intermediate / Advanced",
+  "time_to_understand": "e.g. 2-3 hours to get the big picture",
+  "steps": [
+    {
+      "number": 1,
+      "title": "Short action title",
+      "what_to_do": "Exactly what to do in plain English, like a friend texting you instructions.",
+      "why_it_matters": "Why this step matters for understanding the codebase.",
+      "files_to_open": ["file1.py", "file2.md"]
+    }
+  ],
+  "biggest_gotcha": "The one thing that confuses most newcomers about this repo, explained clearly.",
+  "first_contribution": "The single best first issue or area to contribute to as a newcomer."
+}
+Return ONLY the JSON. No markdown, no backticks.`,
       }),
     })
       .then(r => r.json())
-      .then(data => { setExplanation(data); setLoading(false); })
-      .catch(e  => { setError("Could not load explanation."); setLoading(false); });
-  }, [nodeData, repoUrl]);
+      .then(data => {
+        try {
+          const raw = data.answer || "{}";
+          const clean = raw.replace(/```json|```/g, "").trim();
+          setGuide(JSON.parse(clean));
+        } catch {
+          setGuide({ error: true, raw: data.answer });
+        }
+        setLoading(false);
+      })
+      .catch(() => { setLoading(false); });
+  }, [activeRepoUrl]);
 
-  const complexity = explanation?.complexity || "intermediate";
-  const cplx       = COMPLEXITY_CONFIG[complexity] || COMPLEXITY_CONFIG.intermediate;
+  const toggleCheck = (i) => setChecked(p => ({ ...p, [i]: !p[i] }));
 
   return (
-    <div className="w-[480px] bg-white border-l border-zinc-200 z-[60] flex flex-col shadow-2xl h-full">
-
+    <div className="w-[480px] bg-white border-l border-zinc-200 flex flex-col shadow-2xl h-full">
       {/* Header */}
-      <div className="px-7 py-5 border-b border-zinc-100 flex justify-between items-start bg-zinc-900 text-white">
-        <div className="flex-1 min-w-0">
+      <div className="px-7 py-5 border-b border-zinc-100 flex justify-between items-center bg-gradient-to-r from-zinc-900 to-zinc-800 text-white shrink-0">
+        <div>
           <div className="flex items-center gap-2 mb-1">
-            <Brain size={13} className="text-zinc-400" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">AI Explanation</span>
+            <BookOpen size={13} className="text-zinc-400" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Onboarding Guide</span>
           </div>
-          <h2 className="font-black text-xl tracking-tighter uppercase italic truncate">
-            {nodeData?.label}
-          </h2>
-          <p className="text-[10px] text-zinc-400 font-medium mt-0.5 line-clamp-1">
-            {nodeData?.description}
-          </p>
+          <h2 className="font-black text-lg tracking-tighter uppercase italic">{repoName}</h2>
         </div>
-        <button onClick={onClose} className="p-2 hover:bg-zinc-800 rounded-xl text-zinc-400 transition-colors ml-3 shrink-0">
+        <button onClick={onClose} className="p-2 hover:bg-zinc-700 rounded-xl text-zinc-400 transition-colors">
           <X size={16} />
         </button>
       </div>
 
-      {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {loading && (
           <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center">
-              <Loader2 size={22} className="animate-spin text-zinc-400" />
-            </div>
+            <Loader2 size={28} className="animate-spin text-zinc-300" />
             <div className="text-center">
-              <p className="text-sm font-black text-zinc-700 uppercase tracking-tight">Asking Sentinel…</p>
-              <p className="text-xs text-zinc-400 mt-1">Groq is analyzing this component</p>
+              <p className="text-sm font-black text-zinc-700 uppercase tracking-tight">Generating your guide…</p>
+              <p className="text-xs text-zinc-400 mt-1">AI is reading the codebase for you</p>
             </div>
           </div>
         )}
 
-        {error && (
-          <div className="p-7 flex flex-col items-center gap-3 text-center">
-            <AlertTriangle size={24} className="text-red-400" />
-            <p className="text-sm font-bold text-zinc-600">{error}</p>
+        {!loading && guide && !guide.error && (
+          <div className="p-7 space-y-7">
+
+            {/* Repo summary */}
+            <div className="p-5 bg-zinc-50 rounded-2xl border border-zinc-100">
+              <p className="text-sm text-zinc-700 font-medium leading-relaxed">{guide.repo_summary}</p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                {(guide.tech_stack || []).map((t, i) => (
+                  <span key={i} className="px-3 py-1 bg-zinc-900 text-white rounded-full text-[10px] font-black uppercase tracking-wide">{t}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Difficulty + time */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl">
+                <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-1">Difficulty</p>
+                <p className="text-sm font-black text-blue-800">{guide.difficulty}</p>
+              </div>
+              <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Time to grasp</p>
+                <p className="text-sm font-black text-emerald-800">{guide.time_to_understand}</p>
+              </div>
+            </div>
+
+            {/* Steps */}
+            <div>
+              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4">Your Onboarding Roadmap</h3>
+              <div className="space-y-4">
+                {(guide.steps || []).map((step, i) => (
+                  <div key={i}
+                    className={`p-5 rounded-2xl border transition-all cursor-pointer ${checked[i] ? "bg-emerald-50 border-emerald-200 opacity-70" : "bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-sm"}`}
+                    onClick={() => toggleCheck(i)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0 mt-0.5">
+                        {checked[i]
+                          ? <CheckCircle size={18} className="text-emerald-500" />
+                          : <Circle size={18} className="text-zinc-300" />
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[9px] font-black text-zinc-400 uppercase">Step {step.number}</span>
+                        </div>
+                        <h4 className={`font-black text-sm uppercase tracking-tight mb-2 ${checked[i] ? "line-through text-zinc-400" : "text-zinc-900"}`}>
+                          {step.title}
+                        </h4>
+                        <p className="text-[12px] text-zinc-600 font-medium leading-relaxed mb-2">
+                          {step.what_to_do}
+                        </p>
+                        <p className="text-[11px] text-zinc-400 italic leading-relaxed mb-3">
+                          💡 {step.why_it_matters}
+                        </p>
+                        {step.files_to_open?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {step.files_to_open.map((f, j) => (
+                              <span key={j} className="px-2 py-1 bg-zinc-100 rounded-lg text-[9px] font-black font-mono text-zinc-600">
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Biggest gotcha */}
+            {guide.biggest_gotcha && (
+              <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">⚠️</span>
+                  <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Common Gotcha for Newcomers</span>
+                </div>
+                <p className="text-[12px] text-amber-900 font-medium leading-relaxed">{guide.biggest_gotcha}</p>
+              </div>
+            )}
+
+            {/* First contribution */}
+            {guide.first_contribution && (
+              <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <Rocket size={14} className="text-emerald-600" />
+                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Your First Contribution</span>
+                </div>
+                <p className="text-[12px] text-emerald-900 font-medium leading-relaxed">{guide.first_contribution}</p>
+              </div>
+            )}
           </div>
         )}
 
-        {explanation && !loading && (
+        {!loading && guide?.error && (
+          <div className="p-7">
+            <p className="text-xs text-zinc-500 font-medium leading-relaxed whitespace-pre-wrap">{guide.raw}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── SCOPE PANEL ─────────────────────────────────────────────────────────────
+function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
+  const [scope,   setScope]   = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [openTier, setOpenTier] = useState(1);
+
+  const tierCounts = [0,1,2,3].map(t => ({
+    tier: t,
+    count: nodes.filter(n => (n.data?.tier ?? 1) === t).length,
+    label: ["Root","Major Domains","Sub-Systems","Entry Points"][t],
+    color: ["bg-rose-500","bg-blue-500","bg-emerald-500","bg-zinc-800"][t],
+    nodes: nodes.filter(n => (n.data?.tier ?? 1) === t),
+  }));
+
+  useEffect(() => {
+    if (!activeRepoUrl) return;
+    setLoading(true);
+
+    const allNodes = nodes
+      .map(n => `${n.data?.label}: ${n.data?.description}`)
+      .join("\n");
+
+    fetch("http://localhost:8000/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        repo_url: activeRepoUrl,
+        message: `You are explaining the "${repoName}" codebase architecture to a newcomer.
+
+Components found:
+${allNodes}
+
+Return ONLY a JSON object:
+{
+  "what_is_this": "Plain English: what does this project do? Imagine explaining to a non-technical friend.",
+  "who_uses_it": "Who are the real-world users or developers who use this project?",
+  "why_it_exists": "What problem does this solve? What existed before it?",
+  "how_it_all_connects": "In 2-3 sentences, explain how the major parts talk to each other — like explaining plumbing.",
+  "real_world_analogy": "Give one real-world analogy that explains what this codebase does (e.g. 'This is like the post office for...')",
+  "strengths": ["strength1", "strength2", "strength3"],
+  "good_for_learning": ["concept1", "concept2", "concept3"]
+}
+Return ONLY the JSON. No markdown.`,
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        try {
+          const clean = (data.answer || "{}").replace(/```json|```/g, "").trim();
+          setScope(JSON.parse(clean));
+        } catch { setScope(null); }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [activeRepoUrl]);
+
+  return (
+    <div className="w-[480px] bg-white border-l border-zinc-200 flex flex-col shadow-2xl h-full">
+      {/* Header */}
+      <div className="px-7 py-5 border-b border-zinc-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-500 text-white shrink-0">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Target size={13} className="text-blue-200" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-blue-200">Architecture Scope</span>
+          </div>
+          <h2 className="font-black text-lg tracking-tighter uppercase italic">{repoName}</h2>
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-blue-700 rounded-xl text-blue-200 transition-colors">
+          <X size={16} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {loading && (
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <Loader2 size={28} className="animate-spin text-zinc-300" />
+            <p className="text-sm font-black text-zinc-700 uppercase tracking-tight">Mapping the codebase…</p>
+          </div>
+        )}
+
+        {!loading && (
           <div className="p-7 space-y-6">
 
-            {/* Complexity badge */}
-            <div className="flex items-center gap-2">
-              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${cplx.color}`}>
-                {cplx.label}
-              </span>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                Tier {nodeData?.tier} · {nodeData?.layer}
-              </span>
+            {/* What is this */}
+            {scope?.what_is_this && (
+              <div className="p-5 bg-zinc-900 text-white rounded-2xl">
+                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">In Plain English</p>
+                <p className="text-sm font-medium leading-relaxed">{scope.what_is_this}</p>
+              </div>
+            )}
+
+            {/* Real world analogy */}
+            {scope?.real_world_analogy && (
+              <div className="p-5 bg-amber-50 border border-amber-100 rounded-2xl">
+                <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">🎯 Real World Analogy</p>
+                <p className="text-sm text-amber-900 font-medium leading-relaxed italic">"{scope.real_world_analogy}"</p>
+              </div>
+            )}
+
+            {/* Who uses it + why it exists */}
+            <div className="grid grid-cols-1 gap-3">
+              {scope?.who_uses_it && (
+                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users size={13} className="text-blue-500" />
+                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Who Uses It</span>
+                  </div>
+                  <p className="text-[12px] text-zinc-700 font-medium leading-relaxed">{scope.who_uses_it}</p>
+                </div>
+              )}
+              {scope?.why_it_exists && (
+                <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lightbulb size={13} className="text-rose-500" />
+                    <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Why It Exists</span>
+                  </div>
+                  <p className="text-[12px] text-zinc-700 font-medium leading-relaxed">{scope.why_it_exists}</p>
+                </div>
+              )}
+              {scope?.how_it_all_connects && (
+                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain size={13} className="text-emerald-500" />
+                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">How It All Connects</span>
+                  </div>
+                  <p className="text-[12px] text-zinc-700 font-medium leading-relaxed">{scope.how_it_all_connects}</p>
+                </div>
+              )}
             </div>
 
-            {/* What it does */}
-            <ExplainSection
-              icon={<Target size={15} className="text-rose-500" />}
-              title="What it does"
-              color="rose"
-              content={explanation.what_it_does}
-            />
-
-            {/* Why it exists */}
-            <ExplainSection
-              icon={<Lightbulb size={15} className="text-amber-500" />}
-              title="Why it exists"
-              color="amber"
-              content={explanation.why_it_exists}
-            />
-
-            {/* How it works */}
-            <ExplainSection
-              icon={<Brain size={15} className="text-blue-500" />}
-              title="How it works"
-              color="blue"
-              content={explanation.how_it_works}
-            />
-
-            {/* Who uses it */}
-            <ExplainSection
-              icon={<Users size={15} className="text-violet-500" />}
-              title="Who uses it"
-              color="violet"
-              content={explanation.who_uses_it}
-            />
-
-            {/* Where to start */}
-            <ExplainSection
-              icon={<Rocket size={15} className="text-emerald-500" />}
-              title="Where to start as a newcomer"
-              color="emerald"
-              content={explanation.newcomer_start}
-            />
-
-            {/* Key files */}
-            {explanation.key_files?.length > 0 && (
+            {/* Node breakdown by tier — accordion */}
+            <div>
+              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3">Architecture Breakdown</h3>
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <FileCode size={14} className="text-zinc-500" />
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Key Files</span>
-                </div>
+                {tierCounts.map(({ tier, count, label, color, nodes: tnodes }) => (
+                  <div key={tier} className="border border-zinc-100 rounded-2xl overflow-hidden">
+                    <button
+                      onClick={() => setOpenTier(openTier === tier ? null : tier)}
+                      className="w-full flex items-center justify-between p-4 bg-zinc-50 hover:bg-zinc-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
+                        <span className="text-xs font-black text-zinc-700 uppercase tracking-wide">Tier {tier} · {label}</span>
+                        <span className="px-2 py-0.5 bg-white border border-zinc-200 rounded-full text-[9px] font-black text-zinc-500">
+                          {count}
+                        </span>
+                      </div>
+                      {openTier === tier ? <ChevronDown size={14} className="text-zinc-400" /> : <ChevronRight size={14} className="text-zinc-400" />}
+                    </button>
+                    {openTier === tier && (
+                      <div className="divide-y divide-zinc-50">
+                        {tnodes.map((n, i) => (
+                          <div key={i} className="px-5 py-4">
+                            <p className="text-[11px] font-black text-zinc-800 uppercase tracking-tight mb-1">{n.data?.label}</p>
+                            <p className="text-[11px] text-zinc-500 font-medium leading-relaxed">{n.data?.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Good for learning */}
+            {scope?.good_for_learning?.length > 0 && (
+              <div className="p-5 bg-violet-50 border border-violet-100 rounded-2xl">
+                <p className="text-[9px] font-black text-violet-500 uppercase tracking-widest mb-3">📚 Good for Learning</p>
                 <div className="flex flex-wrap gap-2">
-                  {explanation.key_files.map((f, i) => (
-                    <span key={i}
-                      className="px-3 py-1.5 bg-zinc-900 text-white rounded-lg text-[10px] font-black font-mono tracking-wide">
-                      {f}
+                  {scope.good_for_learning.map((c, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-white border border-violet-200 rounded-xl text-[10px] font-black text-violet-700">
+                      {c}
                     </span>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Contribute tip */}
-            {explanation.contribute_tip && (
-              <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <Star size={13} className="text-emerald-600" />
-                  <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Contribution Tip</span>
+            {/* Strengths */}
+            {scope?.strengths?.length > 0 && (
+              <div className="p-5 bg-zinc-50 border border-zinc-100 rounded-2xl">
+                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-3">⚡ Strengths of this Codebase</p>
+                <div className="space-y-2">
+                  {scope.strengths.map((s, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <Star size={11} className="text-amber-400 mt-0.5 shrink-0" fill="currentColor" />
+                      <p className="text-[11px] text-zinc-600 font-medium">{s}</p>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-[12px] text-emerald-800 font-medium leading-relaxed">
-                  {explanation.contribute_tip}
-                </p>
               </div>
             )}
           </div>
@@ -251,43 +475,147 @@ function NodeExplainPanel({ nodeData, repoUrl, onClose }) {
   );
 }
 
-function ExplainSection({ icon, title, color, content }) {
-  const colorMap = {
-    rose:    "bg-rose-50 border-rose-100",
-    amber:   "bg-amber-50 border-amber-100",
-    blue:    "bg-blue-50 border-blue-100",
-    violet:  "bg-violet-50 border-violet-100",
-    emerald: "bg-emerald-50 border-emerald-100",
+// ─── CHAT PANEL ───────────────────────────────────────────────────────────────
+function ChatPanel({ onClose, repoName, activeRepoUrl }) {
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      text: `Hey! I'm Sentinel 👋 Ask me anything about **${repoName}** — where things live, how parts connect, what a file does, or where to start contributing. I'll explain it like a senior dev texting you.`,
+    },
+  ]);
+  const [input,   setInput]   = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = React.useRef(null);
+
+  const QUICK_QUESTIONS = [
+    "Where should I start as a newcomer?",
+    "What's the most important file in this repo?",
+    "How does the main feature work?",
+    "What's the hardest part to understand?",
+    "How do I run this project locally?",
+  ];
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const send = async (text) => {
+    const msg = text || input.trim();
+    if (!msg) return;
+    setInput("");
+    setMessages(prev => [...prev, { role: "user", text: msg }]);
+    setLoading(true);
+
+    try {
+      const res  = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, repo_url: activeRepoUrl }),
+      });
+      const data = await res.json();
+      setMessages(prev => [...prev, { role: "assistant", text: data.answer || "Sorry, I couldn't get an answer." }]);
+    } catch {
+      setMessages(prev => [...prev, { role: "assistant", text: "Sentinel is offline right now. Check the backend." }]);
+    } finally {
+      setLoading(false);
+    }
   };
+
   return (
-    <div className={`p-4 rounded-2xl border ${colorMap[color] || "bg-zinc-50 border-zinc-100"}`}>
-      <div className="flex items-center gap-2 mb-2">
-        {icon}
-        <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{title}</span>
+    <div className="w-[480px] bg-white border-l border-zinc-200 flex flex-col shadow-2xl h-full">
+      {/* Header */}
+      <div className="px-7 py-5 border-b border-zinc-100 flex justify-between items-center bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shrink-0">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <MessageSquare size={13} className="text-emerald-200" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-200">Ask Sentinel</span>
+          </div>
+          <h2 className="font-black text-lg tracking-tighter uppercase italic">{repoName}</h2>
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-emerald-700 rounded-xl text-emerald-200 transition-colors">
+          <X size={16} />
+        </button>
       </div>
-      <p className="text-[12px] text-zinc-700 font-medium leading-relaxed">{content}</p>
+
+      {/* Quick questions */}
+      <div className="px-5 py-3 border-b border-zinc-100 bg-zinc-50 shrink-0">
+        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Quick Ask</p>
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {QUICK_QUESTIONS.map((q, i) => (
+            <button key={i} onClick={() => send(q)} disabled={loading}
+              className="shrink-0 px-3 py-1.5 bg-white border border-zinc-200 rounded-xl text-[10px] font-bold text-zinc-600 hover:border-emerald-400 hover:text-emerald-600 transition-colors whitespace-nowrap">
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+        {messages.map((m, i) => (
+          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            {m.role === "assistant" && (
+              <div className="w-7 h-7 rounded-xl bg-emerald-100 flex items-center justify-center mr-2 shrink-0 mt-0.5">
+                <Brain size={13} className="text-emerald-600" />
+              </div>
+            )}
+            <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-[12px] font-medium leading-relaxed ${
+              m.role === "user"
+                ? "bg-zinc-900 text-white rounded-br-sm"
+                : "bg-zinc-50 border border-zinc-100 text-zinc-700 rounded-bl-sm"
+            }`}>
+              {m.text}
+            </div>
+          </div>
+        ))}
+
+        {loading && (
+          <div className="flex justify-start">
+            <div className="w-7 h-7 rounded-xl bg-emerald-100 flex items-center justify-center mr-2 shrink-0">
+              <Brain size={13} className="text-emerald-600" />
+            </div>
+            <div className="bg-zinc-50 border border-zinc-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
+              <Loader2 size={13} className="animate-spin text-zinc-400" />
+              <span className="text-[11px] text-zinc-400 font-medium">Thinking…</span>
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="px-5 py-4 border-t border-zinc-100 shrink-0">
+        <div className="flex gap-2">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
+            placeholder="Ask anything about this codebase…"
+            disabled={loading}
+            className="flex-1 border-2 border-zinc-200 rounded-2xl px-4 py-3 text-xs font-bold outline-none focus:border-emerald-400 transition-colors disabled:opacity-50"
+          />
+          <button onClick={() => send()} disabled={loading || !input.trim()}
+            className="w-12 h-12 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white rounded-2xl flex items-center justify-center transition-colors">
+            <Send size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
-// ─── Main Reveal Content ──────────────────────────────────────────────────────
+// ─── MAIN REVEAL ─────────────────────────────────────────────────────────────
 function RevealContent() {
   const { revelationData, activePanel, setActivePanel, activeRepoUrl, clearRevelation } = useStore();
 
-  const [nodes,       setNodes,      onNodesChange] = useNodesState([]);
-  const [edges,       setEdges,      onEdgesChange] = useEdgesState([]);
-  const [isBuilding,  setIsBuilding]                = useState(true);
-  const [builtTiers,  setBuiltTiers]                = useState([]);
-  const [clickedNode, setClickedNode]               = useState(null); // node being explained
-  const { fitView }                                  = useReactFlow();
-
+  const [nodes,      setNodes,      onNodesChange] = useNodesState([]);
+  const [edges,      setEdges,      onEdgesChange] = useEdgesState([]);
+  const [isBuilding, setIsBuilding]                = useState(true);
+  const [builtTiers, setBuiltTiers]                = useState([]);
+  const { fitView }                                 = useReactFlow();
   const nodeTypes = useMemo(() => ({ default: SpectraNode }), []);
 
-  const hasData = (
-    revelationData &&
-    Array.isArray(revelationData.nodes) &&
-    revelationData.nodes.length >= 3
-  );
+  const hasData = revelationData && Array.isArray(revelationData.nodes) && revelationData.nodes.length >= 3;
 
   const source = useMemo(() => {
     if (!hasData) return null;
@@ -296,7 +624,7 @@ function RevealContent() {
     return needsLayout ? { ...d, nodes: computeLayout(d.nodes, d.edges || []) } : d;
   }, [revelationData, hasData]);
 
-  const isFallback       = source?.source === "fallback";
+  const isFallback        = source?.source === "fallback";
   const fallbackFileCount = source?.file_count || 0;
 
   const sortedNodes = useMemo(() => {
@@ -312,7 +640,6 @@ function RevealContent() {
     return (source.edges || []).map((e, i) => ({ ...e, id: e.id || `e_${i}` }));
   }, [source]);
 
-  // ── Tier-by-tier reveal ───────────────────────────────────────────────────
   useEffect(() => {
     if (!source) return;
     setNodes([]); setEdges([]); setIsBuilding(true); setBuiltTiers([]);
@@ -324,44 +651,35 @@ function RevealContent() {
       tierGroups[t].push(n);
     });
 
-    const tiers        = Object.keys(tierGroups).map(Number).sort();
-    const addedNodeIds = new Set();
-    let step           = 0;
+    const tiers = Object.keys(tierGroups).map(Number).sort();
+    const addedIds = new Set();
+    let step = 0;
 
-    const revealNextTier = () => {
+    const revealNext = () => {
       if (step >= tiers.length) {
         setIsBuilding(false);
         setTimeout(() => fitView({ padding: 0.15, duration: 1200 }), 100);
         return;
       }
-      const tier      = tiers[step];
+      const tier = tiers[step];
       const tierNodes = tierGroups[tier];
       setNodes(prev => [...prev, ...tierNodes]);
       setBuiltTiers(prev => [...prev, tier]);
-      tierNodes.forEach(n => addedNodeIds.add(n.id));
+      tierNodes.forEach(n => addedIds.add(n.id));
       setEdges(prev => {
         const newEdges = allEdges.filter(
-          e => addedNodeIds.has(e.source) && addedNodeIds.has(e.target) && !prev.find(p => p.id === e.id)
+          e => addedIds.has(e.source) && addedIds.has(e.target) && !prev.find(p => p.id === e.id)
         );
         return [...prev, ...newEdges];
       });
       setTimeout(() => fitView({ padding: 0.25, duration: 800 }), 80);
       step++;
-      setTimeout(revealNextTier, step === 1 ? 600 : 900);
+      setTimeout(revealNext, step === 1 ? 600 : 900);
     };
 
-    const t = setTimeout(revealNextTier, 300);
+    const t = setTimeout(revealNext, 300);
     return () => clearTimeout(t);
-  }, [source, fitView, sortedNodes, allEdges]);
-
-  // ── Node click handler ────────────────────────────────────────────────────
-  const onNodeClick = useCallback((event, node) => {
-    // Don't explain the root node
-    if ((node.data?.tier ?? 0) === 0) return;
-    setClickedNode(node.data);
-    // Close other panels when explain opens
-    setActivePanel(null);
-  }, [setActivePanel]);
+  }, [source]);
 
   if (!hasData) return <NoDataScreen />;
 
@@ -372,8 +690,8 @@ function RevealContent() {
   return (
     <main className="h-screen w-screen flex flex-col bg-[#F8F9FB] overflow-hidden font-sans">
 
-      {/* ── Navbar ── */}
-      <nav className="px-6 py-3 border-b border-zinc-200 flex justify-between items-center bg-white/95 backdrop-blur-xl z-[100] shadow-sm">
+      {/* Navbar */}
+      <nav className="px-6 py-3 border-b border-zinc-200 flex justify-between items-center bg-white/95 backdrop-blur-xl z-[100] shadow-sm shrink-0">
         <div className="flex items-center gap-4">
           <Link href="/" className="p-2 border border-zinc-200 rounded-xl hover:bg-zinc-50 transition-all">
             <ArrowLeft size={17} />
@@ -381,9 +699,7 @@ function RevealContent() {
           <div>
             <div className="flex items-center gap-2">
               <GitBranch size={13} className="text-zinc-400" />
-              <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest truncate max-w-[300px]">
-                {repoName}
-              </span>
+              <span className="text-[11px] font-black text-zinc-500 uppercase tracking-widest truncate max-w-[300px]">{repoName}</span>
             </div>
             <h1 className="font-black text-sm tracking-tighter uppercase italic text-zinc-900 leading-none mt-0.5">
               Architectural Revelation
@@ -395,9 +711,7 @@ function RevealContent() {
           {isFallback && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-xl">
               <Zap size={11} className="text-amber-500" />
-              <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">
-                Structural map · {fallbackFileCount} files
-              </span>
+              <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Structural · {fallbackFileCount} files</span>
             </div>
           )}
           {isBuilding ? (
@@ -409,14 +723,6 @@ function RevealContent() {
               <ShieldCheck size={10} className="mr-1" /> Blueprint Deployed · {sortedNodes.length} nodes
             </span>
           )}
-
-          {!isBuilding && (
-            <div className="hidden md:flex items-center gap-1 px-3 py-1.5 bg-zinc-50 border border-zinc-200 rounded-xl">
-              <ChevronRight size={10} className="text-zinc-400" />
-              <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Click any node to explore</span>
-            </div>
-          )}
-
           <button onClick={clearRevelation}
             className="flex items-center gap-1.5 px-4 py-2 border border-zinc-200 rounded-xl text-[10px] font-black uppercase text-zinc-500 hover:bg-zinc-50 transition-all">
             <RefreshCw size={11} /> New Analysis
@@ -429,14 +735,14 @@ function RevealContent() {
 
       <div className="flex-1 flex relative overflow-hidden">
 
-        {/* ── Action Deck ── */}
+        {/* Action Deck */}
         <div className="absolute left-5 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-50 p-2 bg-white/80 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-white/50">
-          <DeckButton active={activePanel === "guide"} onClick={() => { setActivePanel("guide"); setClickedNode(null); }} icon={<BookOpen size={20} />}     label="Guide" />
-          <DeckButton active={activePanel === "scope"} onClick={() => { setActivePanel("scope"); setClickedNode(null); }} icon={<Target size={20} />}       label="Scope" />
-          <DeckButton active={activePanel === "chat"}  onClick={() => { setActivePanel("chat");  setClickedNode(null); }} icon={<MessageSquare size={20} />} label="Chat"  />
+          <DeckButton active={activePanel === "guide"} onClick={() => setActivePanel("guide")} icon={<BookOpen size={20} />}     label="Guide" />
+          <DeckButton active={activePanel === "scope"} onClick={() => setActivePanel("scope")} icon={<Target size={20} />}       label="Scope" />
+          <DeckButton active={activePanel === "chat"}  onClick={() => setActivePanel("chat")}  icon={<MessageSquare size={20} />} label="Chat"  />
         </div>
 
-        {/* ── Tier Rail ── */}
+        {/* Tier Rail */}
         <div className="absolute left-[140px] top-0 bottom-0 w-px bg-zinc-200/80 z-10 pointer-events-none">
           {TIER_META.map(({ tier, label, color }) => (
             <TierPill key={tier} label={label} color={color}
@@ -446,19 +752,15 @@ function RevealContent() {
           ))}
         </div>
 
-        {/* ── React Flow Canvas ── */}
+        {/* Canvas */}
         <div className="flex-1 relative">
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            nodes={nodes} edges={edges}
             nodeTypes={nodeTypes}
             defaultEdgeOptions={defaultEdgeOptions}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
-            onNodeClick={onNodeClick}
-            fitView
-            minZoom={0.05}
-            maxZoom={2}
+            fitView minZoom={0.03} maxZoom={2}
           >
             <Background variant="dots" gap={28} size={1} color="#cbd5e1" />
             <Controls className="rounded-2xl shadow-sm" />
@@ -469,160 +771,25 @@ function RevealContent() {
           </ReactFlow>
         </div>
 
-        {/* ── Node Explain Panel (click) ── */}
-        {clickedNode && (
-          <NodeExplainPanel
-            nodeData={clickedNode}
-            repoUrl={activeRepoUrl}
-            onClose={() => setClickedNode(null)}
-          />
+        {/* Side Panels */}
+        {activePanel === "guide" && (
+          <GuidePanel onClose={() => setActivePanel(null)} repoName={repoName} activeRepoUrl={activeRepoUrl} nodes={sortedNodes} />
         )}
-
-        {/* ── Standard Side Panel (deck buttons) ── */}
-        {activePanel && !clickedNode && (
-          <SidePanel
-            panel={activePanel}
-            onClose={() => setActivePanel(null)}
-            repoName={repoName}
-            nodes={sortedNodes}
-            activeRepoUrl={activeRepoUrl}
-          />
+        {activePanel === "scope" && (
+          <ScopePanel onClose={() => setActivePanel(null)} repoName={repoName} activeRepoUrl={activeRepoUrl} nodes={sortedNodes} />
+        )}
+        {activePanel === "chat" && (
+          <ChatPanel onClose={() => setActivePanel(null)} repoName={repoName} activeRepoUrl={activeRepoUrl} />
         )}
       </div>
     </main>
   );
 }
 
-// ─── Standard Side Panel (Guide / Scope / Chat) ───────────────────────────────
-function SidePanel({ panel, onClose, repoName, nodes, activeRepoUrl }) {
-  const [chatMsg,  setChatMsg]  = useState("");
-  const [chatResp, setChatResp] = useState("");
-  const [chatLoad, setChatLoad] = useState(false);
-
-  const tierCounts = [0,1,2,3].map(t => ({
-    tier: t, count: nodes.filter(n => (n.data?.tier ?? 1) === t).length,
-    label: ["Root","Domains","Sub-Systems","DNA"][t],
-  }));
-
-  const sendChat = async () => {
-    if (!chatMsg.trim()) return;
-    setChatLoad(true); setChatResp("");
-    try {
-      const res  = await fetch("http://localhost:8000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: chatMsg, repo_url: activeRepoUrl }),
-      });
-      const data = await res.json();
-      setChatResp(data.answer || "No response.");
-    } catch { setChatResp("Sentinel offline."); }
-    finally { setChatLoad(false); }
-  };
-
-  return (
-    <div className="w-[440px] bg-white border-l border-zinc-200 z-[60] flex flex-col shadow-2xl">
-      <div className="px-8 py-6 border-b border-zinc-100 flex justify-between items-start">
-        <div>
-          <h2 className="text-2xl font-black tracking-tighter capitalize text-zinc-900 italic underline decoration-emerald-500 decoration-[6px]">
-            {panel} Context
-          </h2>
-          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">{repoName}</p>
-        </div>
-        <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full text-zinc-400 transition-colors">
-          <X size={18} />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-        {panel === "scope" && (
-          <>
-            <p className="text-xs text-zinc-500 font-medium leading-relaxed">
-              This map contains <strong className="text-zinc-900">{nodes.length} architectural nodes</strong> across 4 tiers.
-            </p>
-            <div className="space-y-3">
-              {tierCounts.map(({ tier, count, label }) => (
-                <div key={tier} className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl border border-zinc-100">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${["bg-rose-500","bg-blue-500","bg-emerald-500","bg-zinc-800"][tier]}`} />
-                    <span className="text-xs font-black text-zinc-700 uppercase tracking-wide">Tier {tier} · {label}</span>
-                  </div>
-                  <span className="text-xs font-black text-zinc-400">{count} node{count !== 1 ? "s" : ""}</span>
-                </div>
-              ))}
-            </div>
-            <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
-              <p className="text-[11px] font-bold text-zinc-500 italic leading-relaxed">
-                "Click any node to get a plain-English breakdown of what it does and how to contribute."
-              </p>
-            </div>
-          </>
-        )}
-
-        {panel === "guide" && (
-          <>
-            <p className="text-xs text-zinc-500 font-medium">3-step onboarding guide for <strong className="text-zinc-900">{repoName}</strong>.</p>
-            {[
-              { step: "01", title: "Start at the Root", body: "The Tier 0 node (top of the map) tells you what this project does. Read its description, then clone the repo." },
-              { step: "02", title: "Pick a Domain", body: "Click any Tier 1 node that interests you. The panel will explain what that domain does, why it exists, and where to start." },
-              { step: "03", title: "Drill Down", body: "Follow edges down to Tier 2 and Tier 3. Click each node for a full AI breakdown — key files, how it works, and how to contribute." },
-            ].map(({ step, title, body }) => (
-              <div key={step} className="flex gap-4">
-                <span className="text-3xl font-black text-zinc-200 shrink-0 leading-none">{step}</span>
-                <div>
-                  <h4 className="font-black text-sm text-zinc-900 uppercase tracking-tight mb-1">{title}</h4>
-                  <p className="text-[11px] text-zinc-500 leading-relaxed">{body}</p>
-                </div>
-              </div>
-            ))}
-          </>
-        )}
-
-        {panel === "chat" && (
-          <div className="flex flex-col gap-4 h-full">
-            <p className="text-xs text-zinc-500 font-medium">
-              Ask Sentinel anything about <strong className="text-zinc-900">{repoName}</strong>.
-            </p>
-            <div className="flex-1 min-h-[140px] bg-zinc-50 rounded-2xl border border-zinc-100 p-4">
-              {chatLoad && (
-                <div className="flex items-center gap-2 text-zinc-400">
-                  <Loader2 size={14} className="animate-spin" />
-                  <span className="text-xs font-bold">Sentinel thinking…</span>
-                </div>
-              )}
-              {!chatLoad && chatResp && <p className="text-[12px] text-zinc-700 font-medium leading-relaxed">{chatResp}</p>}
-              {!chatLoad && !chatResp && (
-                <p className="text-[11px] text-zinc-300 font-bold italic">
-                  e.g. "Where is authentication handled?" or "What does the API layer do?"
-                </p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={chatMsg}
-                onChange={e => setChatMsg(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && sendChat()}
-                placeholder="Ask about this repo…"
-                className="flex-1 border-2 border-zinc-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-zinc-400 transition-colors"
-              />
-              <button onClick={sendChat} disabled={chatLoad}
-                className="px-5 py-3 bg-zinc-900 text-white rounded-xl font-black text-[10px] uppercase tracking-wider hover:scale-105 transition-all disabled:opacity-40">
-                Ask
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Small components ─────────────────────────────────────────────────────────
 function TierPill({ label, color, visible, style }) {
   return (
     <div className={`absolute left-3 flex items-center gap-3 transition-all duration-700 ${visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`} style={style}>
-      <div className={`px-3 py-1 ${color} text-white rounded-full text-[8px] font-black uppercase tracking-widest shadow`}>
-        {label}
-      </div>
+      <div className={`px-3 py-1 ${color} text-white rounded-full text-[8px] font-black uppercase tracking-widest shadow`}>{label}</div>
     </div>
   );
 }
@@ -638,9 +805,5 @@ function DeckButton({ icon, onClick, active, label }) {
 }
 
 export default function RevealPage() {
-  return (
-    <ReactFlowProvider>
-      <RevealContent />
-    </ReactFlowProvider>
-  );
+  return <ReactFlowProvider><RevealContent /></ReactFlowProvider>;
 }
