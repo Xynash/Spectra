@@ -241,7 +241,7 @@ export default function Home() {
           <GithubIcon size={48}/>
         </div>
         <span className="font-black text-xs uppercase tracking-[1em] opacity-30 text-center">
-          SPECTRA
+          SPECTICAL INTELLIGENCE FOR CODEBASES
         </span>
       </footer>
 

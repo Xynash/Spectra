@@ -1,170 +1,275 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { X, ChevronRight, Sparkles, Code2, GitBranch, Users, Star, Rocket } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
 
-const ROLES = [
-  { id: "student",       label: "Student",              emoji: "🎓", desc: "Learning to code or studying CS" },
-  { id: "developer",     label: "Developer",            emoji: "💻", desc: "Building software professionally" },
-  { id: "contributor",   label: "Open Source Contributor", emoji: "🌍", desc: "Contributing to open source projects" },
-  { id: "recruiter",     label: "Recruiter / Manager",  emoji: "🔍", desc: "Evaluating codebases and developers" },
+const STAGES = [
+  {
+    id: "github",
+    emoji: "🐙",
+    label: "GitHub",
+    sublabel: "Fetching repo DNA",
+    color: "#18181b",
+  },
+  {
+    id: "scraper",
+    emoji: "🔬",
+    label: "Scraper",
+    sublabel: "Pruning file tree",
+    color: "#3b82f6",
+  },
+  {
+    id: "ai",
+    emoji: "🧠",
+    label: "AI Brain",
+    sublabel: "Mapping architecture",
+    color: "#8b5cf6",
+  },
+  {
+    id: "map",
+    emoji: "🗺️",
+    label: "Spectra Map",
+    sublabel: "Blueprint ready!",
+    color: "#10b981",
+  },
 ];
 
-const GOALS = [
-  { id: "understand",  label: "Understand a codebase fast",   emoji: "⚡" },
-  { id: "contribute",  label: "Find where to contribute",     emoji: "🚀" },
-  { id: "onboard",     label: "Onboard onto a new project",   emoji: "🗺️" },
-  { id: "evaluate",    label: "Evaluate code quality",        emoji: "🔬" },
-  { id: "learn",       label: "Learn from great codebases",   emoji: "📚" },
+const LOG_MESSAGES = [
+  "📡 Connecting to GitHub API…",
+  "✅ Repository found — tiangolo/fastapi",
+  "🌿 Fetching file tree (recursive)…",
+  "✂️  Pruning 847 files → 142 meaningful paths",
+  "🧠 Sending context to Groq LLaMA-70B…",
+  "⚡ Groq responded in 1.2s",
+  "🔍 Parsing 14 nodes, 13 edges…",
+  "🎨 Computing tier layout…",
+  "🗺️  Blueprint deployed — 14 nodes ready!",
 ];
 
-export default function IntroModal({ onComplete }) {
-  const [visible, setVisible]   = useState(false);
-  const [step,    setStep]       = useState(0); // 0=name, 1=role, 2=goal, 3=done
-  const [name,    setName]       = useState("");
-  const [role,    setRole]       = useState(null);
-  const [goals,   setGoals]      = useState([]);
-  const [animate, setAnimate]    = useState(true);
+export default function SimulationWidget() {
+  const [running,     setRunning]     = useState(false);
+  const [activeStage, setActiveStage] = useState(-1);
+  const [packetPos,   setPacketPos]   = useState(null);
+  const [logs,        setLogs]        = useState([]);
+  const [done,        setDone]        = useState(false);
+  const [btnPressed,  setBtnPressed]  = useState(false); // ← click animation state
+  const timerRefs = useRef([]);
 
-  useEffect(() => {
-    const profile = localStorage.getItem("spectra_profile");
-    const consent = localStorage.getItem("spectra_consent");
-    if (!profile && consent === "accepted") {
-      setTimeout(() => setVisible(true), 400);
-    }
-  }, []);
-
-  const nextStep = () => {
-    setAnimate(false);
-    setTimeout(() => { setStep(s => s + 1); setAnimate(true); }, 200);
+  const clear = () => {
+    timerRefs.current.forEach(clearTimeout);
+    timerRefs.current = [];
   };
 
-  const handleComplete = () => {
-    const profile = { name, role, goals, joinedAt: new Date().toISOString() };
-    localStorage.setItem("spectra_profile", JSON.stringify(profile));
-    setStep(3);
-    setTimeout(() => { setVisible(false); onComplete?.(profile); }, 2200);
+  const reset = () => {
+    clear();
+    setRunning(false);
+    setActiveStage(-1);
+    setPacketPos(null);
+    setLogs([]);
+    setDone(false);
   };
 
-  const toggleGoal = (id) => {
-    setGoals(p => p.includes(id) ? p.filter(g => g !== id) : [...p, id]);
+  const handleButtonClick = (action) => {
+    // Trigger press animation
+    setBtnPressed(true);
+    setTimeout(() => setBtnPressed(false), 180);
+    action();
   };
 
-  if (!visible) return null;
+  const run = () => {
+    reset();
+    setRunning(true);
+
+    const stagePcts = [8, 33, 58, 83];
+    let delay = 0;
+
+    STAGES.forEach((stage, i) => {
+      const t1 = setTimeout(() => setActiveStage(i), delay);
+      timerRefs.current.push(t1);
+
+      const logIdx = Math.floor((i / STAGES.length) * LOG_MESSAGES.length);
+      const t2 = setTimeout(() => {
+        setLogs(p => [...p, LOG_MESSAGES[logIdx]].slice(-5));
+      }, delay + 100);
+      timerRefs.current.push(t2);
+
+      if (i < STAGES.length - 1) {
+        const fromPct = stagePcts[i];
+        const toPct   = stagePcts[i + 1];
+        const color   = STAGES[i + 1].color;
+        const STEPS   = 30;
+        for (let s = 0; s <= STEPS; s++) {
+          const t = setTimeout(() => {
+            setPacketPos({ fromPct, toPct, pct: s / STEPS, color });
+          }, delay + 600 + s * 18);
+          timerRefs.current.push(t);
+        }
+        const t3 = setTimeout(() => {
+          setLogs(p => [...p, LOG_MESSAGES[logIdx + 1] || ""].slice(-5));
+        }, delay + 900);
+        timerRefs.current.push(t3);
+      }
+
+      delay += 1500;
+    });
+
+    const tDone = setTimeout(() => {
+      setDone(true);
+      setRunning(false);
+      setPacketPos(null);
+      setActiveStage(-1);
+      setLogs(p => [...p, "🎉 Done! Map is live."].slice(-5));
+    }, delay + 300);
+    timerRefs.current.push(tDone);
+  };
+
+  useEffect(() => () => clear(), []);
 
   return (
-    <div className="fixed inset-0 z-[998] flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}>
+    // ── Positioned top-right of the reveal page ──────────────────────────────
+    <div className="fixed top-6 right-6 z-50 w-[420px]">
+      <div className="bg-white border-2 border-black rounded-3xl shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
 
-      <div className={`relative bg-white rounded-3xl border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-md overflow-hidden transition-all duration-300 ${animate ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+        {/* Header */}
+        <div className="px-5 py-3.5 border-b-2 border-black bg-zinc-900 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            </div>
+            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">
+              spectra.pipeline — live simulation
+            </span>
+          </div>
 
-        {/* Progress bar */}
-        <div className="h-1 bg-zinc-100">
-          <div className="h-full bg-zinc-900 transition-all duration-500 rounded-full"
-            style={{ width: `${((step) / 3) * 100}%` }} />
+          {/* ── Run / Stop button with click animation ── */}
+          <button
+            onClick={() => handleButtonClick(running ? reset : run)}
+            className={`
+              px-3.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest
+              border-2 transition-all duration-75 select-none
+              ${running
+                ? "border-red-400 text-red-400 hover:bg-red-400 hover:text-white"
+                : "border-emerald-400 text-emerald-400 hover:bg-emerald-400 hover:text-white"
+              }
+              ${btnPressed
+                ? "scale-90 brightness-75 shadow-none translate-y-[2px]"
+                : "scale-100 shadow-sm"
+              }
+            `}
+            style={{
+              boxShadow: btnPressed
+                ? "none"
+                : running
+                  ? "2px 2px 0px rgba(248,113,113,0.5)"
+                  : "2px 2px 0px rgba(52,211,153,0.5)",
+            }}
+          >
+            {running ? "⏹ Stop" : done ? "🔄 Replay" : "▶ Run"}
+          </button>
         </div>
 
-        {/* Step 0 — Name */}
-        {step === 0 && (
-          <div className="p-8">
-            <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center mb-6">
-              <Sparkles size={26} className="text-white" />
-            </div>
-            <h2 className="font-black text-2xl text-zinc-900 uppercase tracking-tighter mb-1">
-              Welcome to Spectra.
-            </h2>
-            <p className="text-sm text-zinc-500 font-medium mb-8 leading-relaxed">
-              The codebase intelligence tool that makes any repo feel like home.
-              Let's personalise your experience — takes 30 seconds.
-            </p>
-            <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">
-              What should we call you?
-            </label>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && name.trim() && nextStep()}
-              placeholder="Your name or handle…"
-              autoFocus
-              className="w-full border-2 border-zinc-200 rounded-2xl px-4 py-3.5 text-sm font-bold outline-none focus:border-zinc-900 transition-all"
-            />
-            <button
-              onClick={nextStep}
-              disabled={!name.trim()}
-              className="mt-4 w-full py-3.5 bg-zinc-900 disabled:opacity-40 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-zinc-700 transition-all flex items-center justify-center gap-2"
-            >
-              Continue <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
+        {/* Pipeline track */}
+        <div className="px-5 pt-6 pb-3 bg-zinc-50">
+          <div className="relative flex items-center justify-between">
 
-        {/* Step 1 — Role */}
-        {step === 1 && (
-          <div className="p-8">
-            <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-1">Hey {name} 👋</p>
-            <h2 className="font-black text-xl text-zinc-900 uppercase tracking-tighter mb-6">
-              What describes you best?
-            </h2>
-            <div className="space-y-2.5">
-              {ROLES.map(r => (
-                <button key={r.id} onClick={() => { setRole(r.id); setTimeout(nextStep, 260); }}
-                  className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 text-left transition-all hover:scale-[1.01] ${
-                    role === r.id ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-400"
-                  }`}>
-                  <span className="text-2xl">{r.emoji}</span>
-                  <div>
-                    <p className="font-black text-sm text-zinc-900 uppercase tracking-tight">{r.label}</p>
-                    <p className="text-[10px] text-zinc-400 font-medium">{r.desc}</p>
+            {/* Base track */}
+            <div className="absolute left-[8%] right-[8%] h-0.5 bg-zinc-200 top-1/2 -translate-y-1/2 rounded-full" />
+
+            {/* Animated fill */}
+            {activeStage >= 0 && (
+              <div
+                className="absolute h-0.5 bg-zinc-900 top-1/2 -translate-y-1/2 rounded-full transition-all duration-700"
+                style={{
+                  left: "8%",
+                  width: `${(activeStage / (STAGES.length - 1)) * 84}%`,
+                }}
+              />
+            )}
+
+            {/* Flying packet */}
+            {packetPos && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full z-20"
+                style={{
+                  left: `calc(${
+                    packetPos.fromPct +
+                    (packetPos.toPct - packetPos.fromPct) * packetPos.pct
+                  }% - 7px)`,
+                  background: packetPos.color,
+                  boxShadow: `0 0 10px ${packetPos.color}, 0 0 4px ${packetPos.color}`,
+                }}
+              />
+            )}
+
+            {/* Stage nodes */}
+            {STAGES.map((stage, i) => {
+              const isActive = activeStage === i;
+              const isDone   = activeStage > i || done;
+              return (
+                <div key={stage.id} className="relative z-10 flex flex-col items-center gap-1.5">
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl border-2 transition-all duration-300 ${
+                      isActive
+                        ? "scale-125 shadow-xl border-transparent"
+                        : isDone
+                        ? "scale-110 border-transparent opacity-90"
+                        : "bg-white border-zinc-200 grayscale opacity-50"
+                    }`}
+                    style={isActive || isDone ? { background: stage.color } : {}}
+                  >
+                    {isDone && !isActive ? "✅" : stage.emoji}
                   </div>
-                </button>
-              ))}
-            </div>
+                  <div className="text-center">
+                    <p className={`text-[9px] font-black uppercase tracking-wide transition-colors ${
+                      isActive ? "text-zinc-900" : "text-zinc-400"
+                    }`}>
+                      {stage.label}
+                    </p>
+                    {isActive && (
+                      <p className="text-[7px] text-zinc-500 font-medium mt-0.5 animate-pulse">
+                        {stage.sublabel}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
 
-        {/* Step 2 — Goals */}
-        {step === 2 && (
-          <div className="p-8">
-            <h2 className="font-black text-xl text-zinc-900 uppercase tracking-tighter mb-2">
-              What do you want to do?
-            </h2>
-            <p className="text-xs text-zinc-400 font-medium mb-6">Pick all that apply.</p>
-            <div className="space-y-2">
-              {GOALS.map(g => (
-                <button key={g.id} onClick={() => toggleGoal(g.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
-                    goals.includes(g.id) ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 hover:border-zinc-400"
-                  }`}>
-                  <span className="text-lg">{g.emoji}</span>
-                  <span className={`font-black text-xs uppercase tracking-wide ${goals.includes(g.id) ? "text-white" : "text-zinc-700"}`}>
-                    {g.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleComplete}
-              disabled={goals.length === 0}
-              className="mt-5 w-full py-3.5 bg-zinc-900 disabled:opacity-40 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-zinc-700 transition-all flex items-center justify-center gap-2"
-            >
-              Let's Go <Rocket size={15} />
-            </button>
-          </div>
-        )}
-
-        {/* Step 3 — Done */}
-        {step === 3 && (
-          <div className="p-8 flex flex-col items-center text-center">
-            <div className="w-20 h-20 bg-emerald-500 rounded-3xl flex items-center justify-center mb-6 animate-bounce">
-              <Star size={36} className="text-white" fill="white" />
-            </div>
-            <h2 className="font-black text-2xl text-zinc-900 uppercase tracking-tighter mb-2">
-              You're all set, {name}!
-            </h2>
-            <p className="text-sm text-zinc-500 font-medium leading-relaxed">
-              Spectra is ready for you. Paste any GitHub URL and watch the magic happen.
+        {/* Terminal log */}
+        <div className="mx-5 mb-5 bg-zinc-900 rounded-2xl p-3.5 min-h-[100px] font-mono">
+          {logs.length === 0 && (
+            <p className="text-[9px] text-zinc-600 italic">
+              {done ? "Simulation complete." : "Hit ▶ Run to see the pipeline in action…"}
             </p>
-          </div>
-        )}
+          )}
+          {logs.map((log, i) => (
+            <p
+              key={i}
+              className={`text-[10px] leading-relaxed transition-all ${
+                i === logs.length - 1 ? "text-emerald-400" : "text-zinc-500"
+              }`}
+            >
+              {i === logs.length - 1 && running && (
+                <span className="inline-block w-1 h-2.5 bg-emerald-400 mr-1 animate-pulse align-middle" />
+              )}
+              {log}
+            </p>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 pb-4 flex items-center justify-between">
+          <p className="text-[8px] font-black text-zinc-300 uppercase tracking-widest">
+            From URL to map in ~3 seconds
+          </p>
+          {done && (
+            <span className="px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 rounded-full text-[8px] font-black text-emerald-600 uppercase tracking-wide animate-pulse">
+              ✅ Blueprint deployed
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
