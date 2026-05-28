@@ -98,7 +98,7 @@ export default function ExplorePage() {
     setActiveRepoUrl(url);
 
     try {
-      const res  = await fetch("${process.env.NEXT_PUBLIC_API_URL}/analyze", {
+      const res  = await fetch("https://spectra-lzee.onrender.com/analyze", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
@@ -195,3 +195,4 @@ export default function ExplorePage() {
     </main>
   );
 }
+

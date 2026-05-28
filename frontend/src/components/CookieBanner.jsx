@@ -54,3 +54,4 @@ export default function CookieBanner({ onAccept, onDecline }) {
     </div>
   );
 }
+

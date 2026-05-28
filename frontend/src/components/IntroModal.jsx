@@ -247,3 +247,4 @@ export default function IntroModal({ onComplete }) {
     </div>
   );
 }
+

@@ -48,3 +48,4 @@ function TechCard({ icon, step, title, desc }) {
     </div>
   );
 }
+
