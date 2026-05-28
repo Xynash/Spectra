@@ -133,7 +133,7 @@ function GuidePanel({ onClose, repoName, activeRepoUrl, nodes }) {
     if (!activeRepoUrl) return;
     const domainNodes = nodes.filter(n => (n.data?.tier ?? 0) >= 1).slice(0, 12)
       .map(n => `${n.data?.label} (${n.data?.layer}): ${n.data?.description}`).join("\n");
-    fetch("http://localhost:8000/chat", {
+    fetch("${process.env.NEXT_PUBLIC_API_URL}/chat", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ repo_url: activeRepoUrl, message: `You are a senior developer helping a complete newcomer understand the "${repoName}" repository.\n\nKey components:\n${domainNodes}\n\nGenerate a thorough onboarding guide. Return ONLY JSON:\n{"repo_summary":"2-3 sentences about what this does and why it matters","tech_stack":["tech1","tech2"],"difficulty":"Beginner/Intermediate/Advanced","time_to_understand":"e.g. 2-3 hours","steps":[{"number":1,"title":"title","what_to_do":"plain English instructions","why_it_matters":"why this matters","files_to_open":["file.py"]}],"biggest_gotcha":"one thing that confuses newcomers","first_contribution":"best first contribution for newcomers"}\nReturn ONLY the JSON.` }),
     })
@@ -243,7 +243,7 @@ function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
   useEffect(() => {
     if (!activeRepoUrl) return;
     const allNodes = nodes.map(n=>`${n.data?.label}: ${n.data?.description}`).join("\n");
-    fetch("http://localhost:8000/chat", {
+    fetch("${process.env.NEXT_PUBLIC_API_URL}/chat", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({ repo_url: activeRepoUrl, message: `Explain the "${repoName}" codebase to a newcomer.\n\nComponents:\n${allNodes}\n\nReturn ONLY JSON:\n{"what_is_this":"plain English explanation","who_uses_it":"real-world users","why_it_exists":"problem it solves","how_it_all_connects":"how parts talk to each other","real_world_analogy":"one real-world analogy","strengths":["s1","s2","s3"],"good_for_learning":["c1","c2","c3"]}\nReturn ONLY the JSON.` }),
     })
@@ -386,7 +386,7 @@ function ChatPanel({ onClose, repoName, activeRepoUrl }) {
     setMessages(p => [...p, { role: "user", text: msg }]);
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:8000/chat", {
+      const res  = await fetch("${process.env.NEXT_PUBLIC_API_URL}/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: msg, repo_url: activeRepoUrl }),
       });
@@ -587,7 +587,7 @@ function RevealContent() {
     setNodes(prev => prev.map(n => n.id===nid ? { ...n, data: { ...n.data, isExpanded: true } } : n));
 
     try {
-      const res = await fetch("http://localhost:8000/explain", {
+      const res = await fetch("${process.env.NEXT_PUBLIC_API_URL}/explain", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           node_label: node.data.label, node_description: node.data.description || "",

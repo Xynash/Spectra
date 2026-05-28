@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "SPECTRA // Intelligence System",
+  title: "SPECTRA - The Onboarding Standard",
   description: "Code analysis with a twist.",
 };
 

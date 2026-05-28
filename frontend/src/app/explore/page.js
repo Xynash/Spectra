@@ -98,7 +98,7 @@ export default function ExplorePage() {
     setActiveRepoUrl(url);
 
     try {
-      const res  = await fetch("http://localhost:8000/analyze", {
+      const res  = await fetch("${process.env.NEXT_PUBLIC_API_URL}/analyze", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
@@ -189,7 +189,7 @@ export default function ExplorePage() {
       {/* Footer */}
       <footer className="border-t-4 border-black py-10 text-center">
         <span className="font-black text-xs uppercase tracking-[0.8em] opacity-30">
-          SPECTRA // THE ONBOARDING STANDARD // 2025
+          SPECTRA // THE ONBOARDING STANDARD 
         </span>
       </footer>
     </main>
