@@ -1,26 +1,80 @@
-export const initialNodes = [
-  { 
-    id: '1', 
-    type: 'input', 
-    data: { label: 'Main Entry (index.js)' }, 
-    position: { x: 250, y: 0 }, 
-    style: { background: '#3b82f6', color: '#fff', borderRadius: '12px', padding: '10px', border: 'none', fontWeight: 'bold' } 
-  },
-  { 
-    id: '2', 
-    data: { label: 'Auth Controller' }, 
-    position: { x: 100, y: 150 }, 
-    style: { background: '#1e293b', color: '#fff', border: '1px solid #334155', borderRadius: '8px', padding: '10px' } 
-  },
-  { 
-    id: '3', 
-    data: { label: 'Database Schema' }, 
-    position: { x: 400, y: 150 }, 
-    style: { background: '#1e293b', color: '#fff', border: '1px solid #334155', borderRadius: '8px', padding: '10px' } 
-  },
+// Real trending GitHub repos organized by category
+// Each has: id, owner, repo, title, subtitle, color, tag, stars, description, language, topics
+
+export const CATEGORIES = ["All", "Cloud Native", "AI/ML", "Frontend", "Infrastructure", "Security", "Backend"];
+
+export const REPOS = [
+  // ── Cloud Native ──────────────────────────────────────────────────────────
+  { id: 1,  owner: "meshery",        repo: "meshery",          title: "MESHERY",      subtitle: "meshery",         color: "bg-[#FFD600]", tag: "Cloud Native",     stars: "4.2k",  language: "Go",         description: "The cloud native manager for your infra. Manage Kubernetes, service meshes, and more." },
+  { id: 2,  owner: "kubernetes",     repo: "kubernetes",       title: "KUBERNETES",   subtitle: "K8S",             color: "bg-[#00C6FF]", tag: "Cloud Native",     stars: "112k",  language: "Go",         description: "Production-grade container scheduling and management. The backbone of cloud-native." },
+  { id: 3,  owner: "argoproj",       repo: "argo-cd",          title: "ARGOCD",       subtitle: "GitOps",          color: "bg-[#F97316]", tag: "Cloud Native",     stars: "18k",   language: "Go",         description: "Declarative GitOps continuous delivery tool for Kubernetes clusters." },
+  { id: 4,  owner: "helm",           repo: "helm",             title: "HELM",         subtitle: "K8S Package",     color: "bg-[#0F172A]", tag: "Cloud Native",     stars: "27k",   language: "Go",         description: "The Kubernetes package manager — install, upgrade, and manage K8s apps." },
+  { id: 5,  owner: "istio",          repo: "istio",            title: "ISTIO",        subtitle: "Service Mesh",    color: "bg-[#4845D2]", tag: "Cloud Native",     stars: "36k",   language: "Go",         description: "Connect, secure, control, and observe your microservices with this service mesh." },
+  { id: 6,  owner: "linkerd",        repo: "linkerd2",         title: "LINKERD",      subtitle: "Service Mesh",    color: "bg-[#2563EB]", tag: "Cloud Native",     stars: "10k",   language: "Go",         description: "Ultralight, security-first service mesh for Kubernetes with zero config." },
+  { id: 7,  owner: "cilium",         repo: "cilium",           title: "CILIUM",       subtitle: "Networking",      color: "bg-[#F59E0B]", tag: "Cloud Native",     stars: "20k",   language: "Go",         description: "eBPF-based networking, security, and observability for cloud native environments." },
+  { id: 8,  owner: "crossplane",     repo: "crossplane",       title: "CROSSPLANE",   subtitle: "Control Plane",   color: "bg-[#EF4444]", tag: "Cloud Native",     stars: "9k",    language: "Go",         description: "Build control planes without needing to write code using Kubernetes-style APIs." },
+  { id: 9,  owner: "prometheus",     repo: "prometheus",       title: "PROMETHEUS",   subtitle: "Monitoring",      color: "bg-[#E95420]", tag: "Cloud Native",     stars: "56k",   language: "Go",         description: "The leading open-source monitoring and alerting toolkit for cloud-native stacks." },
+  { id: 10, owner: "grafana",        repo: "grafana",          title: "GRAFANA",      subtitle: "Observability",   color: "bg-[#22C55E]", tag: "Cloud Native",     stars: "65k",   language: "Go",         description: "The open observability platform — dashboards, alerting, and data visualization." },
+
+  // ── AI/ML ─────────────────────────────────────────────────────────────────
+  { id: 11, owner: "openai",         repo: "openai-python",    title: "OPENAI SDK",   subtitle: "Python",          color: "bg-[#10B981]", tag: "AI/ML",            stars: "24k",   language: "Python",     description: "The official Python library for the OpenAI API — GPT, Whisper, DALL·E." },
+  { id: 12, owner: "huggingface",    repo: "transformers",     title: "TRANSFORMERS", subtitle: "HuggingFace",     color: "bg-[#FFD600]", tag: "AI/ML",            stars: "138k",  language: "Python",     description: "State-of-the-art ML models for NLP, vision, and audio. The backbone of AI research." },
+  { id: 13, owner: "langchain-ai",   repo: "langchain",        title: "LANGCHAIN",    subtitle: "LLM Framework",   color: "bg-[#7C3AED]", tag: "AI/ML",            stars: "95k",   language: "Python",     description: "Build LLM-powered applications with chains, agents, and memory components." },
+  { id: 14, owner: "ollama",         repo: "ollama",           title: "OLLAMA",       subtitle: "Local LLMs",      color: "bg-[#18181b]", tag: "AI/ML",            stars: "102k",  language: "Go",         description: "Run Llama 3, Mistral, Gemma and other large language models locally on your machine." },
+  { id: 15, owner: "ggerganov",      repo: "llama.cpp",        title: "LLAMA.CPP",    subtitle: "LLM Inference",   color: "bg-[#F97316]", tag: "AI/ML",            stars: "72k",   language: "C++",        description: "LLM inference in pure C/C++. Run LLMs on CPU with quantization support." },
+  { id: 16, owner: "pytorch",        repo: "pytorch",          title: "PYTORCH",      subtitle: "Deep Learning",   color: "bg-[#EE4C2C]", tag: "AI/ML",            stars: "85k",   language: "Python",     description: "Tensors and dynamic neural networks with strong GPU acceleration." },
+  { id: 17, owner: "microsoft",      repo: "autogen",          title: "AUTOGEN",      subtitle: "Multi-Agent AI",  color: "bg-[#0078D4]", tag: "AI/ML",            stars: "36k",   language: "Python",     description: "Multi-agent AI framework for building applications with conversational AI agents." },
+  { id: 18, owner: "crewAIInc",      repo: "crewAI",           title: "CREWAI",       subtitle: "AI Agents",       color: "bg-[#DC2626]", tag: "AI/ML",            stars: "28k",   language: "Python",     description: "Framework for orchestrating role-playing, autonomous AI agents collaborating together." },
+  { id: 19, owner: "instructor-ai",  repo: "instructor",       title: "INSTRUCTOR",   subtitle: "Structured AI",   color: "bg-[#6366F1]", tag: "AI/ML",            stars: "9k",    language: "Python",     description: "Structured outputs from LLMs using Pydantic. Type-safe AI responses." },
+  { id: 20, owner: "qdrant",         repo: "qdrant",           title: "QDRANT",       subtitle: "Vector DB",       color: "bg-[#DC4E3A]", tag: "AI/ML",            stars: "21k",   language: "Rust",       description: "Vector similarity search engine and database for AI applications." },
+
+  // ── Frontend ──────────────────────────────────────────────────────────────
+  { id: 21, owner: "facebook",       repo: "react",            title: "REACT",        subtitle: "UI Library",      color: "bg-[#7000FF]", tag: "Frontend",         stars: "228k",  language: "JavaScript", description: "The library for building user interfaces. Component-based, declarative, efficient." },
+  { id: 22, owner: "vercel",         repo: "next.js",          title: "NEXT.JS",      subtitle: "React Framework",  color: "bg-[#18181b]", tag: "Frontend",         stars: "128k",  language: "JavaScript", description: "The React framework for production — SSR, SSG, API routes, and more." },
+  { id: 23, owner: "vuejs",          repo: "core",             title: "VUE",          subtitle: "Progressive FW",  color: "bg-[#42B883]", tag: "Frontend",         stars: "47k",   language: "TypeScript", description: "The progressive JavaScript framework for building user interfaces." },
+  { id: 24, owner: "sveltejs",       repo: "svelte",           title: "SVELTE",       subtitle: "Compiler FW",     color: "bg-[#FF3E00]", tag: "Frontend",         stars: "80k",   language: "TypeScript", description: "Cybernetically enhanced web apps — compiles to vanilla JS with no runtime." },
+  { id: 25, owner: "tailwindlabs",   repo: "tailwindcss",      title: "TAILWIND",     subtitle: "CSS Framework",   color: "bg-[#38BDF8]", tag: "Frontend",         stars: "83k",   language: "JavaScript", description: "A utility-first CSS framework for rapid UI development without leaving HTML." },
+  { id: 26, owner: "shadcn-ui",      repo: "ui",               title: "SHADCN/UI",    subtitle: "Component Lib",   color: "bg-[#18181b]", tag: "Frontend",         stars: "76k",   language: "TypeScript", description: "Beautifully designed components built with Radix UI and Tailwind CSS." },
+  { id: 27, owner: "vitejs",         repo: "vite",             title: "VITE",         subtitle: "Build Tool",      color: "bg-[#BD34FE]", tag: "Frontend",         stars: "69k",   language: "TypeScript", description: "Next generation frontend tooling — blazing fast dev server and build." },
+  { id: 28, owner: "storybookjs",    repo: "storybook",        title: "STORYBOOK",    subtitle: "UI Workshop",     color: "bg-[#FF4785]", tag: "Frontend",         stars: "84k",   language: "TypeScript", description: "Frontend workshop for building UI components and pages in isolation." },
+  { id: 29, owner: "trpc",           repo: "trpc",             title: "TRPC",         subtitle: "Type-Safe API",   color: "bg-[#398CCB]", tag: "Frontend",         stars: "35k",   language: "TypeScript", description: "End-to-end typesafe APIs made easy — no schema, no code generation." },
+  { id: 30, owner: "remix-run",      repo: "remix",            title: "REMIX",        subtitle: "Full Stack FW",   color: "bg-[#E8F2FF]", tag: "Frontend",         stars: "30k",   language: "TypeScript", description: "Full stack web framework that lets you focus on the user interface." },
+
+  // ── Infrastructure ────────────────────────────────────────────────────────
+  { id: 31, owner: "hashicorp",      repo: "terraform",        title: "TERRAFORM",    subtitle: "IaC",             color: "bg-[#7B42BC]", tag: "Infrastructure",   stars: "43k",   language: "Go",         description: "Infrastructure as Code tool to provision and manage cloud infrastructure safely." },
+  { id: 32, owner: "pulumi",         repo: "pulumi",           title: "PULUMI",       subtitle: "IaC SDK",         color: "bg-[#F7BF2A]", tag: "Infrastructure",   stars: "22k",   language: "Go",         description: "Modern infrastructure as code using familiar programming languages." },
+  { id: 33, owner: "ansible",        repo: "ansible",          title: "ANSIBLE",      subtitle: "Automation",      color: "bg-[#EE0000]", tag: "Infrastructure",   stars: "63k",   language: "Python",     description: "Radically simple IT automation — no agents, no extra custom security infrastructure." },
+  { id: 34, owner: "docker",         repo: "compose",          title: "DOCKER",       subtitle: "Containers",      color: "bg-[#2496ED]", tag: "Infrastructure",   stars: "33k",   language: "Go",         description: "Define and run multi-container Docker applications with a single YAML file." },
+  { id: 35, owner: "fluxcd",         repo: "flux",             title: "FLUX",         subtitle: "GitOps",          color: "bg-[#5468FF]", tag: "Infrastructure",   stars: "7k",    language: "Go",         description: "Open and extensible continuous delivery solution for Kubernetes using GitOps." },
+  { id: 36, owner: "open-telemetry", repo: "opentelemetry-collector", title: "OTEL", subtitle: "Observability",   color: "bg-[#F5A623]", tag: "Infrastructure",   stars: "4k",    language: "Go",         description: "Vendor-agnostic way to receive, process and export telemetry data." },
+  { id: 37, owner: "envoyproxy",     repo: "envoy",            title: "ENVOY",        subtitle: "Proxy",           color: "bg-[#AC6BFF]", tag: "Infrastructure",   stars: "25k",   language: "C++",        description: "Cloud-native high-performance edge/middle/service proxy used by Kubernetes." },
+  { id: 38, owner: "etcd-io",        repo: "etcd",             title: "ETCD",         subtitle: "Key-Value Store", color: "bg-[#419EDA]", tag: "Infrastructure",   stars: "47k",   language: "Go",         description: "Distributed reliable key-value store for the most critical data in distributed systems." },
+  { id: 39, owner: "cert-manager",   repo: "cert-manager",     title: "CERT-MANAGER", subtitle: "TLS Mgmt",        color: "bg-[#00C7B7]", tag: "Infrastructure",   stars: "12k",   language: "Go",         description: "Automatically provision and manage TLS certificates in Kubernetes." },
+  { id: 40, owner: "external-secrets", repo: "external-secrets", title: "EXT-SECRETS", subtitle: "Secrets Mgmt", color: "bg-[#FFB000]", tag: "Infrastructure",   stars: "4k",    language: "Go",         description: "Sync secrets from AWS, GCP, Azure, Vault into Kubernetes as native secrets." },
+
+  // ── Security ──────────────────────────────────────────────────────────────
+  { id: 41, owner: "aquasecurity",   repo: "trivy",            title: "TRIVY",        subtitle: "Vulnerability",   color: "bg-[#1904DA]", tag: "Security",         stars: "24k",   language: "Go",         description: "Find vulnerabilities, misconfigurations, secrets, and SBOMs in containers and code." },
+  { id: 42, owner: "falcosecurity",  repo: "falco",            title: "FALCO",        subtitle: "Runtime Security", color: "bg-[#00AEC7]", tag: "Security",         stars: "7k",    language: "C++",        description: "Cloud-native runtime security — detect unexpected application behavior using eBPF." },
+  { id: 43, owner: "open-policy-agent", repo: "opa",           title: "OPA",          subtitle: "Policy Engine",   color: "bg-[#4596E6]", tag: "Security",         stars: "9k",    language: "Go",         description: "General-purpose policy engine that enables unified, context-aware policy enforcement." },
+  { id: 44, owner: "anchore",        repo: "grype",            title: "GRYPE",        subtitle: "Vuln Scanner",    color: "bg-[#F94E38]", tag: "Security",         stars: "9k",    language: "Go",         description: "A vulnerability scanner for container images and filesystems. Fast and accurate." },
+  { id: 45, owner: "bridgecrewio",   repo: "checkov",          title: "CHECKOV",      subtitle: "IaC Security",    color: "bg-[#7B68EE]", tag: "Security",         stars: "7k",    language: "Python",     description: "Static code analysis tool for infrastructure as code files — Terraform, K8s, and more." },
+  { id: 46, owner: "projectdiscovery", repo: "nuclei",         title: "NUCLEI",       subtitle: "Vuln Scanner",    color: "bg-[#00C853]", tag: "Security",         stars: "21k",   language: "Go",         description: "Fast and customizable vulnerability scanner based on simple YAML based DSL." },
+  { id: 47, owner: "cerbos",         repo: "cerbos",           title: "CERBOS",       subtitle: "AuthZ",           color: "bg-[#FF6B35]", tag: "Security",         stars: "3k",    language: "Go",         description: "Scalable, open-source authorization layer for your applications." },
+  { id: 48, owner: "oauth2-proxy",   repo: "oauth2-proxy",     title: "OAUTH2-PROXY", subtitle: "Auth Proxy",      color: "bg-[#EB5757]", tag: "Security",         stars: "10k",   language: "Go",         description: "A reverse proxy that provides authentication using Google, GitHub, and other providers." },
+  { id: 49, owner: "dexidp",        repo: "dex",               title: "DEX",          subtitle: "Identity",        color: "bg-[#6C63FF]", tag: "Security",         stars: "9k",    language: "Go",         description: "OpenID Connect Identity provider and OAuth2 server federating to other identity providers." },
+  { id: 50, owner: "keycloak",       repo: "keycloak",         title: "KEYCLOAK",     subtitle: "IAM",             color: "bg-[#4D9E3F]", tag: "Security",         stars: "23k",   language: "Java",       description: "Open source identity and access management solution with SSO, OAuth2, and SAML." },
+
+  // ── Backend ───────────────────────────────────────────────────────────────
+  { id: 51, owner: "tiangolo",       repo: "fastapi",          title: "FASTAPI",      subtitle: "Python API",      color: "bg-[#009688]", tag: "Backend",          stars: "78k",   language: "Python",     description: "Modern, fast web framework for building APIs with Python 3.7+ type hints." },
+  { id: 52, owner: "supabase",       repo: "supabase",         title: "SUPABASE",     subtitle: "BaaS",            color: "bg-[#3ECF8E]", tag: "Backend",          stars: "73k",   language: "TypeScript", description: "The open source Firebase alternative — Postgres, Auth, Storage, Realtime." },
+  { id: 53, owner: "prisma",         repo: "prisma",           title: "PRISMA",       subtitle: "ORM",             color: "bg-[#2D3748]", tag: "Backend",          stars: "40k",   language: "TypeScript", description: "Next-generation ORM for Node.js and TypeScript — type-safe and auto-completed." },
+  { id: 54, owner: "expressjs",      repo: "express",          title: "EXPRESS",      subtitle: "Node.js FW",      color: "bg-[#68A063]", tag: "Backend",          stars: "65k",   language: "JavaScript", description: "Fast, unopinionated, minimalist web framework for Node.js." },
+  { id: 55, owner: "nestjs",         repo: "nest",             title: "NESTJS",       subtitle: "Node.js FW",      color: "bg-[#E0234E]", tag: "Backend",          stars: "68k",   language: "TypeScript", description: "Progressive Node.js framework for building efficient, scalable server-side applications." },
+  { id: 56, owner: "pallets",        repo: "flask",            title: "FLASK",        subtitle: "Python FW",       color: "bg-[#18181b]", tag: "Backend",          stars: "68k",   language: "Python",     description: "Lightweight WSGI web application framework. Simple, flexible, and easy to scale." },
+  { id: 57, owner: "gin-gonic",      repo: "gin",              title: "GIN",          subtitle: "Go FW",           color: "bg-[#00B4AB]", tag: "Backend",          stars: "79k",   language: "Go",         description: "HTTP web framework written in Go. Features martini-like API with performance." },
+  { id: 58, owner: "redis",          repo: "redis",            title: "REDIS",        subtitle: "In-Memory DB",    color: "bg-[#DC382D]", tag: "Backend",          stars: "67k",   language: "C",          description: "In-memory data structure store used as database, cache, and message broker." },
+  { id: 59, owner: "apache",         repo: "kafka",            title: "KAFKA",        subtitle: "Event Streaming", color: "bg-[#231F20]", tag: "Backend",          stars: "28k",   language: "Java",       description: "Distributed event streaming platform for high-performance data pipelines." },
+  { id: 60, owner: "graphql",        repo: "graphql-js",       title: "GRAPHQL",      subtitle: "Query Language",  color: "bg-[#E10098]", tag: "Backend",          stars: "20k",   language: "JavaScript", description: "A JavaScript reference implementation for GraphQL, a query language for APIs." },
 ];
 
-export const initialEdges = [
-  { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#3b82f6', strokeWidth: 2 } },
-  { id: 'e1-3', source: '1', target: '3', style: { stroke: '#3b82f6', strokeWidth: 2 } },
-];
+export const FEATURED = REPOS.slice(0, 4); // for homepage

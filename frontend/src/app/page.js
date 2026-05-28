@@ -15,6 +15,8 @@ const Sentinel         = dynamic(() => import("../components/Sentinel"),        
 const CookieBanner     = dynamic(() => import("../components/CookieBanner"),      { ssr: false });
 const IntroModal       = dynamic(() => import("../components/IntroModal"),        { ssr: false });
 const SimulationWidget = dynamic(() => import("../components/SimulationWidget"), { ssr: false });
+import { REPOS } from "../lib/mockData";
+const LANDING_PROJECTS = REPOS.slice(0, 4);
 
 const GithubIcon = ({ size = 24 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -23,12 +25,7 @@ const GithubIcon = ({ size = 24 }) => (
   </svg>
 );
 
-const LANDING_PROJECTS = [
-  { id: 1, title: "meshery/meshery",  color: "bg-[#FFD600]", tag: "Go / React",   stars: "4.2k",  complexity: "High"     },
-  { id: 2, title: "spectra/core-ai",  color: "bg-[#FF5C00]", tag: "Python / RAG", stars: "1.1k",  complexity: "Medium"   },
-  { id: 3, title: "kubernetes/k8s",   color: "bg-[#00F0FF]", tag: "Go / Cloud",   stars: "102k",  complexity: "Critical" },
-  { id: 4, title: "facebook/react",   color: "bg-[#7000FF]", tag: "JS / Library", stars: "210k",  complexity: "High"     },
-];
+// Imported from mockData
 
 function ErrorBanner({ message, onDismiss }) {
   if (!message) return null;
@@ -158,7 +155,7 @@ export default function Home() {
         </h1>
 
         <p className={`text-xl md:text-3xl font-medium max-w-3xl mx-auto mb-16 mt-20 leading-relaxed italic ${isDark?"text-zinc-500":"text-zinc-400"}`}>
-          The ultimate repo intelligence for anyone. <br/> Map it , learn it , and contribute seamlessly.
+          "The ultimate repo intelligence for everyone. <br/> Map it , learn it and contribute seamlessly."
         </p>
 
         <ErrorBanner message={error} onDismiss={() => setError(null)}/>
@@ -189,19 +186,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* Simulation Widget */}
-      <section className="w-full max-w-2xl px-4 mb-20 z-10">
-        <div className="text-center mb-6">
-          <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDark?"text-zinc-600":"text-zinc-400"}`}>
-            See how it Flows
-          </p>
-          <h3 className="font-black text-2xl uppercase tracking-tighter mt-1">
-            The Animated Pipeline
-          </h3>
-        </div>
-        <SimulationWidget/>
-      </section>
-
       <div className="w-full mb-20"><TechTicker/></div>
 
       {/* Latest Revelations */}
@@ -225,9 +209,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── How It Works: Pipeline Simulation ── */}
+      <section className={`w-full py-32 border-b-4 border-black z-10 ${isDark?"bg-[#050505]":"bg-white"}`}>
+        <div className="max-w-6xl mx-auto px-10">
+          <div className="flex flex-col md:flex-row items-center gap-20">
+            <div className="flex-1">
+              <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-3 ${isDark?"text-zinc-600":"text-zinc-400"}`}>Under the hood</p>
+              <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.85] mb-8">
+                From URL<br/>to map in<br/>
+                <span className={isDark?"text-purple-500":"text-emerald-500"}>~3 seconds.</span>
+              </h2>
+              <p className={`text-lg font-medium leading-relaxed max-w-sm ${isDark?"text-zinc-500":"text-zinc-400"}`}>
+                Spectra fetches the repo, prunes thousands of files down to what matters, runs it through Groq AI, and renders a 4-tier architectural map . All in one click.
+              </p>
+              <div className="flex flex-col gap-3 mt-8">
+                {[
+                  { emoji: "🐙", label: "GitHub API",    desc: "Fetches full recursive file tree"  },
+                  { emoji: "🔬", label: "Scraper",       desc: "Prunes noise, keeps key paths"     },
+                  { emoji: "🧠", label: "Groq AI Brain", desc: "Maps architecture in plain English" },
+                  { emoji: "🗺️",  label: "Spectra Map",   desc: "4-tier interactive blueprint"      },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="text-xl w-8">{s.emoji}</span>
+                    <span className="font-black text-xs uppercase tracking-wide">{s.label}</span>
+                    <span className={`text-xs font-medium ${isDark?"text-zinc-600":"text-zinc-400"}`}>— {s.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex-1 flex justify-center">
+              <div className="w-full max-w-lg"><SimulationWidget fullWidth={true}/></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="py-40 flex flex-col items-center text-center max-w-7xl px-6 z-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-36 mt-40 w-full">
+        <h2 className="text-7xl md:text-[10rem] font-black tracking-tighter mb-10 leading-[0.8] uppercase text-center">
+          What we do ? <br/> 
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mt-40 w-full">
           <FeatureItem icon={<Sparkles size={48}/>} color={isDark?"bg-purple-900":"bg-amber-300"} title="Auto Scan"     isDark={isDark}/>
           <FeatureItem icon={<Code size={48}/>}     color={isDark?"bg-blue-900":  "bg-rose-400"}  title="Logic Map"    isDark={isDark}/>
           <FeatureItem icon={<Layers size={48}/>}   color={isDark?"bg-emerald-900":"bg-blue-400"} title="Deep Context" isDark={isDark}/>
@@ -241,7 +263,7 @@ export default function Home() {
           <GithubIcon size={48}/>
         </div>
         <span className="font-black text-xs uppercase tracking-[1em] opacity-30 text-center">
-          SPECTICAL INTELLIGENCE FOR CODEBASES
+          SPECTRA : THE ONBOARDING STANDARD
         </span>
       </footer>
 

@@ -14,6 +14,7 @@ import {
   Users, Lightbulb, CheckCircle, Circle, Play, Square,
 } from "lucide-react";
 import Link from "next/link";
+import SimulationWidget from "../../components/SimulationWidget";
 import { useRouter } from "next/navigation";
 
 // ─── Edge styles ──────────────────────────────────────────────────────────────
@@ -751,6 +752,10 @@ function RevealContent() {
 
         {/* Canvas — flex-1 ensures it never shrinks when panel opens */}
         <div className="flex-1 relative min-w-0">
+          {/* Simulation widget — top right */}
+          <div className="absolute top-4 right-4 z-50">
+            <SimulationWidget />
+          </div>
           <ReactFlow
             nodes={nodes} edges={edges}
             nodeTypes={nodeTypes}
