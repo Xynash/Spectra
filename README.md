@@ -1,17 +1,5 @@
 <div align="center">
-
-<br/>
-
-```
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-      S · P · E · C · T · R · A
-      CODEBASE  INTELLIGENCE  UNIT
-      CLEARANCE LEVEL: OPEN SOURCE
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-```
-
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=13&pause=1000&color=A855F7&center=true&vCenter=true&width=600&lines=SIGNAL+ACQUIRED...;SCANNING+REPOSITORY+STRUCTURE...;MAPPING+CALL+GRAPH...;SENTINEL+IS+ONLINE.+👁️)](https://git.io/typing-svg)
-
+<img src="https://capsule-render.vercel.app/api?type=venom&height=220&text=SPECTRA&fontSize=90&color=0:0d0014,100:1a0033&fontColor=a855f7&strokeWidth=2&stroke=a855f7&animation=fadeIn&desc=CODEBASE%20INTELLIGENCE%20UNIT&descSize=16&descAlignY=78&descAlign=50&descFontColor=666666" width="100%"/>
 <br/>
 
 [![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
