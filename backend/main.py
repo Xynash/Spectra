@@ -32,6 +32,16 @@ class ExplainRequest(BaseModel):
     node_tier: int
     repo_url: str
 
+# ─── Keep-alive ping ──────────────────────────────────────────────────────────
+@app.get("/ping")
+async def ping():
+    return {"status": "alive", "service": "Spectra Intelligence Engine"}
+
+@app.get("/")
+async def root():
+    return {"status": "alive", "service": "Spectra Intelligence Engine"}
+
+# ─── Routes ───────────────────────────────────────────────────────────────────
 @app.post("/analyze")
 async def analyze_repo(request: RepoRequest):
     result = await dna_ingestor.fetch_repo_structure(request.url)
