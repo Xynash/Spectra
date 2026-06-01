@@ -1,22 +1,25 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore } from "../lib/store";
 import {
   Search, ArrowRight, Code, Layers, Sparkles,
-  Rocket, Star, Cpu, Moon, Sun, Loader2, AlertCircle, Zap,
+  Rocket, Star, Cpu, Moon, Sun, Loader2, AlertCircle,
 } from "lucide-react";
 
-const TechTicker       = dynamic(() => import("../components/TechTicker"),        { ssr: false });
-const ProjectRow       = dynamic(() => import("../components/ProjectRow"),         { ssr: false });
-const Sentinel         = dynamic(() => import("../components/Sentinel"),           { ssr: false, loading: () => <div className="w-full h-full bg-emerald-100 animate-pulse rounded-full border-2 border-black"/> });
-const CookieBanner     = dynamic(() => import("../components/CookieBanner"),      { ssr: false });
-const IntroModal       = dynamic(() => import("../components/IntroModal"),        { ssr: false });
+const TechTicker       = dynamic(() => import("../components/TechTicker"),       { ssr: false });
+const ProjectRow       = dynamic(() => import("../components/ProjectRow"),        { ssr: false });
+const Sentinel         = dynamic(() => import("../components/Sentinel"),          { ssr: false, loading: () => <div className="w-full h-full bg-emerald-100 animate-pulse rounded-full border-2 border-black"/> });
+const CookieBanner     = dynamic(() => import("../components/CookieBanner"),     { ssr: false });
+const IntroModal       = dynamic(() => import("../components/IntroModal"),       { ssr: false });
 const SimulationWidget = dynamic(() => import("../components/SimulationWidget"), { ssr: false });
+
 import { REPOS } from "../lib/mockData";
 const LANDING_PROJECTS = REPOS.slice(0, 4);
+
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const GithubIcon = ({ size = 24 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -24,8 +27,6 @@ const GithubIcon = ({ size = 24 }) => (
     <path d="M9 18c-4.51 2-5-2-7-2"/>
   </svg>
 );
-
-// Imported from mockData
 
 function ErrorBanner({ message, onDismiss }) {
   if (!message) return null;
@@ -38,14 +39,27 @@ function ErrorBanner({ message, onDismiss }) {
   );
 }
 
+// Loading messages that cycle during long waits
+const LOADING_MESSAGES = [
+  "Ingesting repo DNA…",
+  "Fetching file tree from GitHub…",
+  "Pruning noise, keeping signal…",
+  "⏳ Backend warming up — almost there…",
+  "🧠 Running AI architecture analysis…",
+  "🗺️ Building your blueprint…",
+  "Almost done — laying out the map…",
+];
+
 export default function Home() {
-  const [isDark,       setIsDark]       = useState(false);
-  const [repoUrl,      setRepoUrl]      = useState("");
-  const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState(null);
-  const [showIntro,    setShowIntro]    = useState(false);
-  const [userName,     setUserName]     = useState("");
-  const router = useRouter();
+  const [isDark,      setIsDark]      = useState(false);
+  const [repoUrl,     setRepoUrl]     = useState("");
+  const [loading,     setLoading]     = useState(false);
+  const [loadingSec,  setLoadingSec]  = useState(0);
+  const [error,       setError]       = useState(null);
+  const [showIntro,   setShowIntro]   = useState(false);
+  const [userName,    setUserName]    = useState("");
+  const timerRef = useRef(null);
+  const router   = useRouter();
 
   const setRevelationData = useStore(s => s.setRevelationData);
   const setActiveRepoUrl  = useStore(s => s.setActiveRepoUrl);
@@ -62,6 +76,23 @@ export default function Home() {
       try { setUserName(JSON.parse(profile).name || ""); } catch {}
     }
   }, []);
+
+  // Start / stop the loading timer
+  useEffect(() => {
+    if (loading) {
+      setLoadingSec(0);
+      timerRef.current = setInterval(() => setLoadingSec(s => s + 1), 1000);
+    } else {
+      clearInterval(timerRef.current);
+      setLoadingSec(0);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [loading]);
+
+  const loadingMsg = LOADING_MESSAGES[Math.min(
+    Math.floor(loadingSec / 4),
+    LOADING_MESSAGES.length - 1
+  )];
 
   const handleCookieAccept = () => {
     const profile = localStorage.getItem("spectra_profile");
@@ -83,7 +114,7 @@ export default function Home() {
     setActiveRepoUrl(trimmed);
 
     try {
-      const res  = await fetch("https://spectra-lzee.onrender.com/analyze", {
+      const res  = await fetch(`${API}/analyze`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: trimmed }),
       });
@@ -92,7 +123,7 @@ export default function Home() {
       if (!res.ok) {
         const code = data?.detail?.code || "UNKNOWN";
         const msg  = data?.detail?.message || "Analysis failed.";
-        if (code === "GITHUB_RATE_LIMIT") setError("⏱ GitHub rate limit. Wait ~1 hour or add GITHUB_PAT to .env");
+        if (code === "GITHUB_RATE_LIMIT") setError("⏱ GitHub rate limit. Wait ~1 hour.");
         else if (code === "REPO_NOT_FOUND") setError("🔍 Repo not found. Check the URL.");
         else setError(`❌ ${msg}`);
         setLoading(false); return;
@@ -101,13 +132,15 @@ export default function Home() {
       setRevelationData(data.graph);
       router.push("/reveal");
     } catch {
-      setError("Cannot reach backend. Is uvicorn running on port 8000?");
+      setError("Cannot reach backend. Try again in a moment.");
     } finally { setLoading(false); }
   };
 
   return (
-    <main className={`min-h-screen relative flex flex-col items-center pt-6 transition-all duration-700 overflow-x-hidden ${isDark ? "bg-[#050505] text-white" : "bg-[#FCFAF7] text-black"}`}
-      style={{ backgroundImage: isDark ? "radial-gradient(circle at 20% 50%, rgba(120,40,200,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(59,130,246,0.04) 0%, transparent 50%)" : "radial-gradient(circle at 20% 50%, rgba(16,185,129,0.04) 0%, transparent 50%)" }}>
+    <main className={`min-h-screen relative flex flex-col items-center pt-6 transition-all duration-700 overflow-x-hidden ${isDark?"bg-[#050505] text-white":"bg-[#FCFAF7] text-black"}`}
+      style={{ backgroundImage: isDark
+        ? "radial-gradient(circle at 20% 50%, rgba(120,40,200,0.04) 0%, transparent 50%)"
+        : "radial-gradient(circle at 20% 50%, rgba(16,185,129,0.04) 0%, transparent 50%)" }}>
 
       {/* Decorative */}
       <div className={`fixed top-20 left-10 opacity-20 animate-pulse ${isDark?"text-purple-400":"text-rose-400"}`}><Star size={100} fill="currentColor"/></div>
@@ -155,11 +188,12 @@ export default function Home() {
         </h1>
 
         <p className={`text-xl md:text-3xl font-medium max-w-3xl mx-auto mb-16 mt-20 leading-relaxed italic ${isDark?"text-zinc-500":"text-zinc-400"}`}>
-          "The ultimate repo intelligence for everyone. <br/> Map it , learn it and contribute seamlessly."
+          "The ultimate repo intelligence for everyone. <br/> Map it, learn it, and contribute seamlessly."
         </p>
 
         <ErrorBanner message={error} onDismiss={() => setError(null)}/>
 
+        {/* Search box */}
         <div className="w-full max-w-3xl relative group mb-6">
           <div className={`border-4 border-black p-5 rounded-[2.5rem] flex items-center transition-all group-focus-within:-translate-y-2 ${isDark?"bg-zinc-900":"bg-white"}`}
             style={{ boxShadow: "6px 6px 0px 0px rgba(0,0,0,1)" }}>
@@ -179,10 +213,18 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Loading message with timer */}
         {loading && (
-          <p className={`text-xs font-bold uppercase tracking-widest animate-pulse ${isDark?"text-zinc-500":"text-zinc-400"}`}>
-            Ingesting repo DNA · Running AI analysis…
-          </p>
+          <div className="flex flex-col items-center gap-2">
+            <p className={`text-xs font-bold uppercase tracking-widest animate-pulse ${isDark?"text-zinc-500":"text-zinc-400"}`}>
+              {loadingMsg}
+            </p>
+            {loadingSec > 8 && (
+              <p className={`text-[10px] font-medium ${isDark?"text-zinc-600":"text-zinc-300"}`}>
+                {loadingSec}s — backend may be warming up, hang tight…
+              </p>
+            )}
+          </div>
         )}
       </section>
 
@@ -209,7 +251,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── How It Works: Pipeline Simulation ── */}
+      {/* How It Works */}
       <section className={`w-full py-32 border-b-4 border-black z-10 ${isDark?"bg-[#050505]":"bg-white"}`}>
         <div className="max-w-6xl mx-auto px-10">
           <div className="flex flex-col md:flex-row items-center gap-20">
@@ -220,14 +262,14 @@ export default function Home() {
                 <span className={isDark?"text-purple-500":"text-emerald-500"}>~3 seconds.</span>
               </h2>
               <p className={`text-lg font-medium leading-relaxed max-w-sm ${isDark?"text-zinc-500":"text-zinc-400"}`}>
-                Spectra fetches the repo, prunes thousands of files down to what matters, runs it through Groq AI, and renders a 4-tier architectural map . All in one click.
+                Spectra fetches the repo, prunes thousands of files down to what matters, runs it through Groq AI, and renders a 4-tier architectural map — all in one click.
               </p>
               <div className="flex flex-col gap-3 mt-8">
                 {[
-                  { emoji: "🐙", label: "GitHub API",    desc: "Fetches full recursive file tree"  },
-                  { emoji: "🔬", label: "Scraper",       desc: "Prunes noise, keeps key paths"     },
-                  { emoji: "🧠", label: "Groq AI Brain", desc: "Maps architecture in plain English" },
-                  { emoji: "🗺️",  label: "Spectra Map",   desc: "4-tier interactive blueprint"      },
+                  { emoji: "🐙", label: "GitHub API",    desc: "Fetches full recursive file tree"   },
+                  { emoji: "🔬", label: "Scraper",       desc: "Prunes noise, keeps key paths"      },
+                  { emoji: "🧠", label: "Groq AI Brain", desc: "Maps architecture in plain English"  },
+                  { emoji: "🗺️",  label: "Spectra Map",   desc: "4-tier interactive blueprint"       },
                 ].map((s, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="text-xl w-8">{s.emoji}</span>
@@ -247,7 +289,7 @@ export default function Home() {
       {/* Features */}
       <section className="py-40 flex flex-col items-center text-center max-w-7xl px-6 z-10">
         <h2 className="text-7xl md:text-[10rem] font-black tracking-tighter mb-10 leading-[0.8] uppercase text-center">
-          What we do ? <br/> 
+          What we do?
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mt-40 w-full">
           <FeatureItem icon={<Sparkles size={48}/>} color={isDark?"bg-purple-900":"bg-amber-300"} title="Auto Scan"     isDark={isDark}/>
@@ -267,7 +309,6 @@ export default function Home() {
         </span>
       </footer>
 
-      {/* Cookie Banner + Intro Modal */}
       <CookieBanner onAccept={handleCookieAccept} onDecline={() => {}}/>
       {showIntro && <IntroModal onComplete={handleIntroComplete}/>}
     </main>
@@ -286,4 +327,3 @@ function FeatureItem({ icon, color, title, isDark }) {
     </div>
   );
 }
-
