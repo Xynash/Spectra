@@ -14,3 +14,4 @@ __pycache__/
 frontend/.next/
 out/
 build/
+repomix-output.xml
