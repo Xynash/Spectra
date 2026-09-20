@@ -25,9 +25,9 @@ export default function HowItWorks() {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 w-full">
-          <TechCard icon={<Cpu size={48} />} step="01" title="DNA Ingestion" desc="GitHub GraphQL API integration to extract full-scale repository trees." />
-          <TechCard icon={<Brain size={48} />} step="02" title="AST Decryption" desc="Tree-sitter parsing for multi-language semantic logic mapping." />
-          <TechCard icon={<Zap size={48} />} step="03" title="RAG Reveal" desc="Vector-embedded search for real-time natural language codebase chat." />
+          <TechCard icon={<Cpu size={48} />} step="01" title="Tree Ingestion" desc="Fetches the full recursive file tree of any public repo through the GitHub REST API." />
+          <TechCard icon={<Brain size={48} />} step="02" title="Noise Pruning" desc="Filters out build folders, lockfiles and assets so only meaningful paths reach the model." />
+          <TechCard icon={<Zap size={48} />} step="03" title="LLM Mapping" desc="Groq (with Gemini fallback) turns the pruned tree into a 4-tier interactive architecture map." />
         </div>
       </div>
       

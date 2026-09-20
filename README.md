@@ -2,7 +2,7 @@
 <img src="https://capsule-render.vercel.app/api?type=venom&height=220&text=SPECTRA&fontSize=90&color=0:0d0014,100:1a0033&fontColor=a855f7&strokeWidth=2&stroke=a855f7&animation=fadeIn&desc=CODEBASE%20INTELLIGENCE%20UNIT&descSize=16&descAlignY=78&descAlign=50&descFontColor=666666" width="100%"/>
 <br/>
 
-[![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org)
 [![Three.js](https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=threedotjs&logoColor=white)](https://threejs.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
@@ -20,17 +20,19 @@ You had no map."</i>
 
 **SPECTRA was built for that exact moment.**
 
-It turns any GitHub repository — no matter how large, how old, or how undocumented — into something you can *see*, *talk to*, and *navigate*. Not someday. In seconds.
+It turns a public GitHub repository into an interactive architecture map you can *see*, *explore*, and *ask questions about*, so your first hour in an unfamiliar codebase isn't spent guessing where things live.
+
+**Live:** [sspectra-ai.vercel.app](https://sspectra-ai.vercel.app)
 
 ---
 
 ## 👁️ What Is SPECTRA?
 
-SPECTRA is a **Codebase Intelligence Platform**. Drop in a GitHub URL. The Sentinel wakes up, reads the entire repository, builds a map of how everything connects, and answers your questions about it.
+SPECTRA is a **codebase onboarding tool**. Drop in a GitHub URL. It reads the repository's structure, asks an LLM to organise it into a 4-tier architecture map, and lets you click through every part in plain English.
+
 <img width="1855" height="915" alt="image" src="https://github.com/user-attachments/assets/51eefe43-6a1e-49b0-973d-3aa4af8aab6e" />
 
-
-It was born from a real story — the frustration of trying to make a first contribution to [Meshery](https://github.com/meshery/meshery), a massive cloud-native project, with no guide and no map. Mentors were busy. The architecture was invisible.
+It was born from a real story: the frustration of trying to make a first contribution to [Meshery](https://github.com/meshery/meshery), a massive cloud-native project, with no guide and no map. Mentors were busy. The architecture was invisible.
 
 SPECTRA makes the invisible, visible.
 
@@ -41,11 +43,15 @@ SPECTRA makes the invisible, visible.
 ```
   [ INPUT ]                    [ SPECTRA ]                   [ OUTPUT ]
 
-  GitHub URL     ──────►   Reads the whole repo     ──────►  Visual Map
-  Your question  ──────►   Understands the logic    ──────►  Plain English answer  
-  "Where's auth?"──────►   Finds it semantically    ──────►  Exact file + context
-  You, confused  ──────►   Generates a roadmap      ──────►  Your first PR guide
+  GitHub URL     ──────►   Reads the repo structure  ──────►  Interactive 4-tier map
+  Click a node   ──────►   Explains that component   ──────►  Plain-English breakdown
+  Your question  ──────►   Answers from the layout   ──────►  Where to look next
+  You, confused  ──────►   Builds an onboarding plan ──────►  Step-by-step guide
 ```
+
+- **Architecture map:** root, domains, subsystems, entry points, revealed tier by tier.
+- **Node deep-dive:** what it does, why it exists, how it works, where to start, first contribution tip.
+- **Guide / Scope / Chat panels:** an onboarding roadmap, a big-picture summary, and a Q&A assistant called the Sentinel.
 
 No jargon. No digging. No asking a mentor for the fifth time.
 
@@ -53,17 +59,23 @@ No jargon. No digging. No asking a mentor for the fifth time.
 
 ## 🔬 How It Actually Works
 
-### Step 1 — DNA Ingestion
-SPECTRA uses the **GitHub GraphQL API v4** to fetch the entire repository in one batch — file tree, metadata, contribution history. Fast, efficient, rate-limit friendly.
+### Step 1: Tree Ingestion
+The FastAPI backend calls the **GitHub REST API** (recursive git tree) to fetch every file path in the repository. Optional `GITHUB_PAT` support raises the rate limit.
 
-### Step 2 — AST Decryption
-It doesn't read your code as text. It uses **Tree-sitter** to parse it into an Abstract Syntax Tree — understanding that `Function A` in `auth.go` calls `Middleware B` in `router.js`, *across languages*. This builds the **Visual Map**.
+### Step 2: Noise Pruning
+Build folders, lockfiles, images and other noise are filtered out. Very large repos are capped by prioritising root, `src/`, `app/`, `lib/` and config paths, so only meaningful paths reach the model.
 
-### Step 3 — Semantic Memory
-Every code chunk gets converted into vector embeddings via **OpenAI** and stored in **pgvector on Supabase**. So when you ask *"where is auth handled?"*, SPECTRA doesn't search for the word `auth` — it finds the *concept* of authentication. Anywhere it lives.
+### Step 3: LLM Architecture Mapping
+The pruned tree goes to **Groq**, which returns a strict JSON graph (nodes, edges, layers, tiers). The response is validated and laid out into four tiers.
 
-### Step 4 — The Sentinel Answers
-**Claude 3.5 Sonnet** takes the retrieved context and generates a response — architecture summaries, logic explanations, or a step-by-step guide for your first pull request.
+- If Groq fails or returns an invalid graph, the backend falls back to **Gemini**, rotating through multiple API keys on rate limits.
+- If every AI provider fails, a **deterministic folder-grouping map** is returned so the user still gets a result.
+
+### Step 4: The Sentinel Explains
+Clicking a node calls `/explain`, and the Chat panel calls `/chat`. Both are grounded in the repository's file structure.
+
+### Hardening
+Strict GitHub URL validation and owner/repo sanitisation (SSRF prevention), Pydantic request limits, and per-endpoint rate limiting via slowapi.
 
 ---
 
@@ -71,15 +83,12 @@ Every code chunk gets converted into vector embeddings via **OpenAI** and stored
 
 | What | With |
 |---|---|
-| Frontend | Next.js 15, React 19, Zustand |
+| Frontend | Next.js 16, React 19, Zustand, Tailwind CSS 4 |
+| Graph UI | React Flow (`@xyflow/react`) |
 | 3D Sentinel | Three.js + React Three Fiber |
-| Animations | Framer Motion |
-| Backend | FastAPI (Python) |
-| Code Parsing | Tree-sitter (multi-language AST) |
-| Data Ingestion | GitHub GraphQL API v4 |
-| AI Reasoning | Claude 3.5 Sonnet |
-| Embeddings | OpenAI |
-| Vector Search | pgvector on Supabase |
+| Backend | FastAPI (Python), slowapi |
+| AI | Groq (primary), Google Gemini (fallback) |
+| Data Source | GitHub REST API |
 
 ---
 
@@ -87,23 +96,42 @@ Every code chunk gets converted into vector embeddings via **OpenAI** and stored
 
 | Phase | Name | Status |
 |---|---|---|
-| **Phase 1** | The Spectacle — full frontend, 3D Sentinel, dual-theme UI | ✅ Done |
-| **Phase 2** | The Brain — FastAPI, GraphQL scraper, Claude prompt engineering | 🔄 In Progress |
-| **Phase 3** | The Revelation — live Visual Maps, Codebase Chat, PR roadmaps | 🔮 Planned |
+| **Phase 1** | The Spectacle: frontend, 3D Sentinel, animated tier-by-tier reveal | ✅ Done |
+| **Phase 2** | The Brain: FastAPI backend, GitHub ingestion, Groq/Gemini mapping with fallback | ✅ Done |
+| **Phase 3** | The Deep Read: code-aware analysis (Tree-sitter parsing, embeddings, vector search) | 🔮 Planned |
 
-> **Right now:** The frontend is fully running. The backend brain is being wired up.
+> **Right now:** SPECTRA analyses a repository's **structure** (file paths). It does not yet read file contents, so explanations are inferred from layout and naming. Phase 3 is about closing that gap.
 
 ---
 
 ## 🚀 Run It Yourself
 
 ### You'll need
-- Node.js 18+
-- Python 3.10+ *(for the backend — Phase 2)*
-- A [GitHub Personal Access Token](https://github.com/settings/tokens)
-- An [Anthropic API key](https://console.anthropic.com) + [OpenAI API key](https://platform.openai.com)
+- Node.js 20+
+- Python 3.10+
+- A [Groq API key](https://console.groq.com)
+- *(Optional)* Google Gemini API key(s) for fallback
+- *(Optional)* A [GitHub Personal Access Token](https://github.com/settings/tokens) for a higher rate limit
 
-### Frontend *(works today)*
+### Backend
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate      # Windows: .\.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+Create `backend/.env`:
+
+```
+GROQ_API_KEY=your_key
+GOOGLE_API_KEY_1=your_key      # optional, add _2, _3 ... for rotation
+GITHUB_PAT=your_token          # optional
+```
+
+### Frontend
 
 ```bash
 cd frontend
@@ -111,29 +139,19 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` — the Sentinel is watching.
-
-### Backend *(Phase 2 — in progress)*
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate      # Windows: .\.venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env           # drop your API keys in here
-uvicorn main:app --reload
-```
+Open `http://localhost:3000`. Set `NEXT_PUBLIC_API_URL` if your backend isn't on `http://localhost:8000`.
 
 ---
 
 ## 🤝 Want to Contribute?
 
-SPECTRA is a project *about* making open source contribution easier — so naturally, it welcomes contributors.
+SPECTRA is a project *about* making open source contribution easier, so naturally it welcomes contributors.
 
 Good places to start:
-- **More languages** — add Tree-sitter grammars for Rust, Go, Java
-- **Better prompts** — improve the Claude 3.5 architecture summary prompts
-- **UI themes** — new Galactic or Neo-Brutalism variants
+- **Code-aware analysis:** Tree-sitter parsing for Python, Go, JS/TS
+- **Better prompts:** improve the architecture and explanation prompts
+- **Caching:** cache GitHub tree fetches to save rate limit
+- **UI themes:** new Galactic or Neo-Brutalism variants
 
 Open an issue first if it's a big change. Let's talk.
 

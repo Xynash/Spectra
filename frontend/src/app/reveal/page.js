@@ -9,9 +9,9 @@ import { useStore } from "../../lib/store";
 import SpectraNode from "../../components/SpectraNode";
 import {
   ArrowLeft, BookOpen, Target, MessageSquare, X, Loader2,
-  ShieldCheck, RefreshCw, GitBranch, Zap, AlertTriangle,
-  Send, ChevronDown, ChevronRight, Star, Rocket, Brain,
-  Users, Lightbulb, CheckCircle, Circle, Play, Square,
+  ShieldCheck, RefreshCw, GitBranch, AlertTriangle,
+  Send, ChevronDown, ChevronRight, Star, Brain,
+  CheckCircle, Circle, Play, Square,
 } from "lucide-react";
 import Link from "next/link";
 import SimulationWidget from "../../components/SimulationWidget";

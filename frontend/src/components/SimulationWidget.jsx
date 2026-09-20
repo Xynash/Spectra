@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Square, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Play, Square, ChevronDown, ChevronUp } from "lucide-react";
 
 const STAGES = [
   { id: "github",  emoji: "🐙", label: "GitHub",      sublabel: "Fetching repo DNA",      color: "#18181b" },
@@ -14,7 +14,7 @@ const LOG_MESSAGES = [
   "✅ Repository found",
   "🌿 Fetching file tree (recursive)…",
   "✂️  Pruning → 142 meaningful paths",
-  "🧠 Sending to Groq LLaMA-70B…",
+  "🧠 Sending to Groq gpt-oss-120b…",
   "⚡ AI responded in 1.2s",
   "🔍 Parsing 14 nodes, 13 edges…",
   "🎨 Computing tier layout…",
