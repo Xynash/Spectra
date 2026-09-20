@@ -1,4 +1,5 @@
 import os
+import time
 import re
 import logging
 from collections import defaultdict
@@ -20,6 +21,7 @@ IGNORED_EXTENSIONS = {
 }
 
 MAX_FILES = 280
+CACHE_TTL = 600
 
 # ─── SSRF: Validate extracted owner/repo segments ─────────────────────────────
 # Prevents path traversal (../../etc) and query injection (repo?token=x)
@@ -33,7 +35,7 @@ def _parse_github_owner_repo(repo_url: str) -> tuple[str, str]:
     parts    = clean.rstrip("/").split("/")
     if len(parts) < 5:
         raise ValueError("URL missing owner/repo segments")
-    owner, repo = parts[-2], parts[-1]
+    owner, repo = parts[3], parts[4]
     if not OWNER_RE.match(owner) or not REPO_RE.match(repo):
         logger.warning(f"Blocked suspicious owner/repo: {owner[:40]!r}/{repo[:40]!r}")
         raise ValueError("Invalid owner or repo name")
@@ -43,6 +45,7 @@ def _parse_github_owner_repo(repo_url: str) -> tuple[str, str]:
 class DNAIngestor:
     def __init__(self):
         self.token = os.getenv("GITHUB_PAT")
+        self._cache = {}
         if not self.token:
             logger.warning("GITHUB_PAT not set — running unauthenticated (60 req/hr limit)")
 
@@ -101,6 +104,18 @@ class DNAIngestor:
         return {"repo": f"{owner}/{repo_name}", "source": "fallback", "nodes": nodes, "edges": edges, "file_count": len(file_paths)}
 
     async def fetch_repo_structure(self, repo_url: str):
+        key = repo_url.strip().rstrip("/")
+        hit = self._cache.get(key)
+        if hit and time.time() - hit[0] < CACHE_TTL:
+            return hit[1]
+        result = await self._fetch_repo_structure_uncached(repo_url)
+        if isinstance(result, dict) and "paths" in result:
+            if len(self._cache) > 200:
+                self._cache.clear()
+            self._cache[key] = (time.time(), result)
+        return result
+
+    async def _fetch_repo_structure_uncached(self, repo_url: str):
         # ── Validate owner/repo before building the API URL ───────────────────
         try:
             owner, repo = _parse_github_owner_repo(repo_url)
