@@ -66,7 +66,7 @@ class SpectraBrain:
             if os.getenv(f"GOOGLE_API_KEY_{i}")
         ]
         self.current_key_index = 0
-        self.model_id = "gemini-2.0-flash"
+        self.model_id = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
         if self.keys:
             self._init_client()
         else:
@@ -156,22 +156,31 @@ Hard rules:
         repo_name = repo_url.rstrip("/").split("/")[-1].upper() if repo_url else "REPOSITORY"
         prompt = self._build_prompt(files_summary, repo_name)
 
-        # 1. Try Groq
-        try:
-            completion = await asyncio.to_thread(self.groq_client.chat.completions.create,
-                model="openai/gpt-oss-120b",
-                messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"},
-                temperature=0.2,
-                max_tokens=2048,
-            )
-            raw = json.loads(completion.choices[0].message.content)
-            if self._validate_graph(raw):
-                print(f"✅ Groq success — {len(raw['nodes'])} nodes, {len(raw['edges'])} edges")
-                return self._process_revelation(raw)
-            print("⚠️  Groq returned invalid shape — trying Gemini")
-        except Exception as e:
-            print(f"⚠️  Groq fail: {e}")
+        # 1. Try Groq (up to 2 attempts)
+        for attempt in (1, 2):
+            try:
+                completion = await asyncio.to_thread(
+                    self.groq_client.chat.completions.create,
+                    model="openai/gpt-oss-120b",
+                    messages=[{"role": "user", "content": prompt}],
+                    response_format={"type": "json_object"},
+                    temperature=0.2,
+                    max_tokens=4096,
+                )
+                choice = completion.choices[0]
+                usage = getattr(completion, "usage", None)
+                ctoks = getattr(usage, "completion_tokens", "?")
+                print(f"[groq] attempt {attempt}: finish_reason={choice.finish_reason} completion_tokens={ctoks}")
+                raw = json.loads(choice.message.content)
+                if self._validate_graph(raw):
+                    n_nodes = len(raw["nodes"])
+                    n_edges = len(raw["edges"])
+                    print(f"[groq] success - {n_nodes} nodes, {n_edges} edges")
+                    return self._process_revelation(raw)
+                print(f"[groq] attempt {attempt} returned invalid shape")
+            except Exception as e:
+                print(f"[groq] attempt {attempt} fail: {e}")
+        print("[groq] exhausted - trying Gemini")
 
         # 2. Gemini key rotation
         if not self.client:
