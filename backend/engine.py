@@ -158,7 +158,7 @@ Hard rules:
 
         # 1. Try Groq
         try:
-            completion = self.groq_client.chat.completions.create(
+            completion = await asyncio.to_thread(self.groq_client.chat.completions.create,
                 model="openai/gpt-oss-120b",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
@@ -249,7 +249,7 @@ Rules:
 - Return ONLY the JSON. No markdown. No extra text."""
 
         try:
-            completion = self.groq_client.chat.completions.create(
+            completion = await asyncio.to_thread(self.groq_client.chat.completions.create,
                 model="openai/gpt-oss-120b",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
@@ -283,7 +283,7 @@ Rules:
             "Rules: technical, concise (2–3 sentences), helpful mentor tone."
         )
         try:
-            completion = self.groq_client.chat.completions.create(
+            completion = await asyncio.to_thread(self.groq_client.chat.completions.create,
                 model="openai/gpt-oss-120b",
                 messages=[{"role": "user", "content": prompt}],
             )
