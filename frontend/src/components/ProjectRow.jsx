@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Star, Zap, Github } from "lucide-react";
+import { Star, Zap } from "lucide-react";
 
 const COMPLEXITY_COLOR = {
   Low:      "bg-emerald-500",
@@ -19,10 +19,7 @@ export default function ProjectRow({ projects }) {
 
   const handleAnalyze = (e, owner, repo) => {
     e.stopPropagation();
-    const url = `https://github.com/${owner}/${repo}`;
-    // Store in sessionStorage for the home page to pick up
-    sessionStorage.setItem("spectra_auto_analyze", url);
-    router.push("/");
+    router.push("/explore");
   };
 
   return (

@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search, Star, Zap, Github, ExternalLink } from "lucide-react";
+import { ArrowLeft, Search, Star, Zap } from "lucide-react";
 import { REPOS, CATEGORIES } from "../../lib/mockData";
 import { useStore } from "../../lib/store";
 

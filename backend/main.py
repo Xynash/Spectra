@@ -17,7 +17,7 @@ app = FastAPI(title="Spectra Intelligence Engine")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# ─── CORS (unchanged from your original) ──────────────────────────────────────
+# ─── CORS ──────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

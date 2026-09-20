@@ -8,7 +8,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      {/* Remove the Navbar here so it stops crashing */}
+      
       <body className="antialiased bg-[#FCFAF7]">
         {children}
       </body>
