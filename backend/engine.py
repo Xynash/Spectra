@@ -25,10 +25,13 @@ def _paths(file_list):
     """file_list items may be plain strings or {"path": "..."} dicts -- normalize to strings."""
     return [f["path"] if isinstance(f, dict) else f for f in file_list]
 
-TIER_Y = {1: 0, 2: 220, 3: 900, 4: 1300}
-NODE_WIDTH = 180
-H_GAP = 24
-MAX_PER_ROW = 6
+TIER_WIDTHS = {1: 280, 2: 250, 3: 220, 4: 260}
+H_GAP = 40
+V_GAP = 100
+MAX_ROW_WIDTH = 1400
+
+def get_max_per_row(node_width):
+    return max(1, (MAX_ROW_WIDTH + H_GAP) // (node_width + H_GAP))
 
 
 def compute_tree_layout(raw_nodes, raw_edges):
@@ -37,17 +40,22 @@ def compute_tree_layout(raw_nodes, raw_edges):
         tiers.setdefault(node.get("data", {}).get("tier", 1), []).append(node)
 
     positioned = []
+    current_y = 0
     for tier, nodes in sorted(tiers.items()):
-        base_y = TIER_Y.get(tier, tier * 160)
-        row_count = (len(nodes) + MAX_PER_ROW - 1) // MAX_PER_ROW
+        node_width = TIER_WIDTHS.get(tier, 220)
+        node_height = node_width * 0.6
+        max_per_row = get_max_per_row(node_width)
+        row_count = (len(nodes) + max_per_row - 1) // max_per_row
         for row in range(row_count):
-            row_nodes = nodes[row * MAX_PER_ROW:(row + 1) * MAX_PER_ROW]
-            total_width = len(row_nodes) * (NODE_WIDTH + H_GAP) - H_GAP
+            row_nodes = nodes[row * max_per_row:(row + 1) * max_per_row]
+            total_width = len(row_nodes) * (node_width + H_GAP) - H_GAP
             start_x = -total_width / 2
-            y = base_y + row * (140)
+            y = current_y + row * (node_height + V_GAP)
             for i, node in enumerate(row_nodes):
-                node["position"] = {"x": start_x + i * (NODE_WIDTH + H_GAP), "y": y}
+                node["position"] = {"x": start_x + i * (node_width + H_GAP), "y": y}
                 positioned.append(node)
+        tier_height = row_count * (node_height + V_GAP)
+        current_y += tier_height + V_GAP
     return positioned
 
 
@@ -241,6 +249,12 @@ No prose outside the JSON. No markdown fences."""
 
 
 spectra_brain = SpectraBrain()
+
+
+
+
+
+
 
 
 
