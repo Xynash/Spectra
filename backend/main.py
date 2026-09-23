@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+﻿from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -10,14 +10,14 @@ import uvicorn
 from scraper import dna_ingestor
 from engine import spectra_brain
 
-# ─── Rate Limiter ─────────────────────────────────────────────────────────────
+# â”€â”€â”€ Rate Limiter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title="Spectra Intelligence Engine")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# ─── CORS ──────────────────────────────────────
+# â”€â”€â”€ CORS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -29,8 +29,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── SSRF Prevention ──────────────────────────────────────────────────────────
-# Only allows valid github.com repo URLs — blocks file://, internal IPs, etc.
+# â”€â”€â”€ SSRF Prevention â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Only allows valid github.com repo URLs â€” blocks file://, internal IPs, etc.
 GITHUB_URL_PATTERN = re.compile(
     r'^https://github\.com/[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+(/.*)?$'
 )
@@ -44,7 +44,7 @@ def validate_github_url(url: str) -> str:
         )
     return url
 
-# ─── Request Models ───────────────────────────────────────────────────────────
+# â”€â”€â”€ Request Models â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class RepoRequest(BaseModel):
     url: str = Field(..., min_length=10, max_length=300)
 
@@ -74,7 +74,7 @@ class ExplainRequest(BaseModel):
     def repo_url_must_be_github(cls, v):
         return validate_github_url(v)
 
-# ─── Keep-alive ───────────────────────────────────────────────────────────────
+# â”€â”€â”€ Keep-alive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.get("/ping")
 async def ping():
     return {"status": "alive", "service": "Spectra Intelligence Engine"}
@@ -83,7 +83,7 @@ async def ping():
 async def root():
     return {"status": "alive", "service": "Spectra Intelligence Engine"}
 
-# ─── Routes ───────────────────────────────────────────────────────────────────
+# â”€â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.post("/analyze")
 @limiter.limit("10/minute")
 async def analyze_repo(request: Request, body: RepoRequest):
@@ -124,7 +124,7 @@ async def explain_node(request: Request, body: ExplainRequest):
 async def chat_with_sentinel(request: Request, body: ChatRequest):
     result = await dna_ingestor.fetch_repo_structure(body.repo_url)
     file_list = [{"path": p} for p in result.get("paths", [])] if "paths" in result else []
-    answer = await spectra_brain.chat_with_repo(body.message, file_list)
+    answer = await spectra_brain.chat_with_repo(body.message, file_list, repo_url=body.repo_url)
     return {"answer": answer}
 
 if __name__ == "__main__":

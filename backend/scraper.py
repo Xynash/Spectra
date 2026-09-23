@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import re
 import logging
@@ -6,6 +6,9 @@ from collections import defaultdict
 from urllib.parse import urlparse, urlunparse
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger("spectra.scraper")
 
@@ -68,8 +71,15 @@ class DNAIngestor:
                 paths.append(path)
 
         if len(paths) > MAX_FILES:
-            root   = [p for p in paths if "/" not in p]
-            src    = [p for p in paths if p.startswith(("src/", "app/", "lib/", "core/", "api/"))]
+            NON_SOURCE_TOP_PREFIXES = (
+                "docs", "doc", "example", "test", "script",
+                ".github", "asset", "static", "benchmark", "media", "image",
+            )
+            root = [p for p in paths if "/" not in p]
+            src = [
+                p for p in paths
+                if "/" in p and not p.split("/")[0].startswith(NON_SOURCE_TOP_PREFIXES)
+            ]
             config = [p for p in paths if p.startswith(("config/", "Dockerfile", "docker-compose", ".env.example"))]
             seen = set()
             priority = []
@@ -150,6 +160,8 @@ class DNAIngestor:
 
         if response.status_code == 200:
             contents = response.json()
+            if contents.get("truncated"):
+                logger.warning(f"GitHub tree truncated for {owner}/{repo} — file list is incomplete")
             pruned = self._prune_tree(contents.get("tree", []))
             logger.info(f"Fetched {owner}/{repo} → {len(pruned)} files")
             return {"paths": pruned, "repo_url": repo_url}
@@ -158,3 +170,4 @@ class DNAIngestor:
 
 
 dna_ingestor = DNAIngestor()
+

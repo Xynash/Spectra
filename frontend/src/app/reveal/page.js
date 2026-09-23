@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useMemo, useEffect, useState, useCallback, useRef } from "react";
 import {
   ReactFlow, Background, Controls, MiniMap,
@@ -17,7 +17,7 @@ import Link from "next/link";
 import SimulationWidget from "../../components/SimulationWidget";
 import { useRouter } from "next/navigation";
 
-// ─── Edge styles ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Edge styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const defaultEdgeOptions = {
   type: "smoothstep", animated: false,
   style: { stroke: "#cbd5e1", strokeWidth: 2, opacity: 0.8 },
@@ -33,7 +33,7 @@ const detailEdgeStyle = {
   markerEnd: { type: MarkerType.ArrowClosed, color: "#e4e4e7", width: 10, height: 10 },
 };
 
-// ─── Layout ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TIER_Y   = { 0: 0, 1: 500, 2: 1000, 3: 1500 };
 const NODE_W   = 300;
 const H_GAP    = 80;
@@ -62,7 +62,7 @@ function computeLayout(nodes, edges) {
   return Object.values(positioned);
 }
 
-// Detail nodes placed DIRECTLY below their parent — no fitView shift
+// Detail nodes placed DIRECTLY below their parent â€” no fitView shift
 function buildDetailNodes(parentNode, explanation) {
   const px  = parentNode.position.x;
   const py  = parentNode.position.y;
@@ -76,7 +76,7 @@ function buildDetailNodes(parentNode, explanation) {
     { id: `${pid}_contribute`, layer: "detail_contribute", detailType: "First contribution", label: explanation.contribute_tip, files: [] },
   ];
 
-  // Place in a tight row directly below the parent — no massive Y offset
+  // Place in a tight row directly below the parent â€” no massive Y offset
   const totalW  = cards.length * (DETAIL_W + DETAIL_GAP) - DETAIL_GAP;
   const startX  = px + NODE_W / 2 - totalW / 2;
   const detailY = py + 220; // just below the node card
@@ -95,13 +95,13 @@ function buildDetailNodes(parentNode, explanation) {
 }
 
 const TIER_META = [
-  { tier: 0, label: "Tier 0 · Root",        color: "bg-rose-500"    },
-  { tier: 1, label: "Tier 1 · Domains",     color: "bg-blue-500"    },
-  { tier: 2, label: "Tier 2 · Sub-Systems", color: "bg-emerald-500" },
-  { tier: 3, label: "Tier 3 · DNA",         color: "bg-zinc-800"    },
+  { tier: 0, label: "Tier 0 Â· Root",        color: "bg-rose-500"    },
+  { tier: 1, label: "Tier 1 Â· Domains",     color: "bg-blue-500"    },
+  { tier: 2, label: "Tier 2 Â· Sub-Systems", color: "bg-emerald-500" },
+  { tier: 3, label: "Tier 3 Â· DNA",         color: "bg-zinc-800"    },
 ];
 
-// ─── No data screen ───────────────────────────────────────────────────────────
+// â”€â”€â”€ No data screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function NoDataScreen() {
   const router = useRouter();
   return (
@@ -117,13 +117,13 @@ function NoDataScreen() {
       </div>
       <button onClick={() => router.push("/")}
         className="px-10 py-4 bg-zinc-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 transition-all">
-        ← Back to Spectra
+        â† Back to Spectra
       </button>
     </main>
   );
 }
 
-// ─── GUIDE PANEL ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ GUIDE PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function GuidePanel({ onClose, repoName, activeRepoUrl, nodes }) {
   const [guide, setGuide]     = useState(null);
   const [loading, setLoading] = useState(true);
@@ -149,14 +149,14 @@ function GuidePanel({ onClose, repoName, activeRepoUrl, nodes }) {
     <div className="w-[460px] bg-white border-l border-zinc-100 flex flex-col shadow-2xl h-full">
       <div className="px-6 py-5 flex justify-between items-center bg-zinc-900 text-white shrink-0">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1">📖 Onboarding Guide</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1">ðŸ“– Onboarding Guide</p>
           <h2 className="font-black text-base tracking-tighter uppercase italic truncate max-w-[320px]">{repoName}</h2>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-zinc-700 rounded-xl text-zinc-400"><X size={15}/></button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {loading && <LoadingState label="Building your onboarding guide…" sub="AI is reading the codebase" />}
+        {loading && <LoadingState label="Building your onboarding guideâ€¦" sub="AI is reading the codebase" />}
         {!loading && guide && !guide.error && (
           <div className="p-6 space-y-5">
             <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
@@ -191,7 +191,7 @@ function GuidePanel({ onClose, repoName, activeRepoUrl, nodes }) {
                         <p className="text-[9px] font-black text-zinc-400 uppercase mb-1">Step {step.number}</p>
                         <h4 className={`font-black text-xs uppercase tracking-tight mb-1.5 ${checked[i]?"line-through text-zinc-400":"text-zinc-900"}`}>{step.title}</h4>
                         <p className="text-[11px] text-zinc-600 font-medium leading-relaxed mb-1.5">{step.what_to_do}</p>
-                        <p className="text-[10px] text-zinc-400 italic mb-2">💡 {step.why_it_matters}</p>
+                        <p className="text-[10px] text-zinc-400 italic mb-2">ðŸ’¡ {step.why_it_matters}</p>
                         {step.files_to_open?.length > 0 && (
                           <div className="flex flex-wrap gap-1">
                             {step.files_to_open.map((f,j) => (
@@ -207,13 +207,13 @@ function GuidePanel({ onClose, repoName, activeRepoUrl, nodes }) {
             </div>
             {guide.biggest_gotcha && (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-2">⚠️ Common Gotcha</p>
+                <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-2">âš ï¸ Common Gotcha</p>
                 <p className="text-[11px] text-amber-900 font-medium leading-relaxed">{guide.biggest_gotcha}</p>
               </div>
             )}
             {guide.first_contribution && (
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2">🚀 First Contribution</p>
+                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2">ðŸš€ First Contribution</p>
                 <p className="text-[11px] text-emerald-900 font-medium leading-relaxed">{guide.first_contribution}</p>
               </div>
             )}
@@ -227,7 +227,7 @@ function GuidePanel({ onClose, repoName, activeRepoUrl, nodes }) {
   );
 }
 
-// ─── SCOPE PANEL ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ SCOPE PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
   const [scope, setScope]       = useState(null);
   const [loading, setLoading]   = useState(true);
@@ -259,14 +259,14 @@ function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
     <div className="w-[460px] bg-white border-l border-zinc-100 flex flex-col shadow-2xl h-full">
       <div className="px-6 py-5 flex justify-between items-center bg-blue-600 text-white shrink-0">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-widest text-blue-200 mb-1">🎯 Architecture Scope</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-blue-200 mb-1">ðŸŽ¯ Architecture Scope</p>
           <h2 className="font-black text-base tracking-tighter uppercase italic truncate max-w-[320px]">{repoName}</h2>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-blue-700 rounded-xl text-blue-200"><X size={15}/></button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {loading && <LoadingState label="Mapping the architecture…" sub="Analyzing components" />}
+        {loading && <LoadingState label="Mapping the architectureâ€¦" sub="Analyzing components" />}
         {!loading && (
           <div className="p-6 space-y-4">
             {scope?.what_is_this && (
@@ -277,26 +277,26 @@ function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
             )}
             {scope?.real_world_analogy && (
               <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
-                <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-1">🎯 Real World Analogy</p>
+                <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mb-1">ðŸŽ¯ Real World Analogy</p>
                 <p className="text-[12px] text-amber-900 font-medium italic leading-relaxed">"{scope.real_world_analogy}"</p>
               </div>
             )}
             <div className="space-y-2">
               {scope?.who_uses_it && (
                 <div className="p-3.5 bg-blue-50 border border-blue-100 rounded-xl">
-                  <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">👥 Who Uses It</p>
+                  <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">ðŸ‘¥ Who Uses It</p>
                   <p className="text-[11px] text-zinc-700 font-medium leading-relaxed">{scope.who_uses_it}</p>
                 </div>
               )}
               {scope?.why_it_exists && (
                 <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-xl">
-                  <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">💡 Why It Exists</p>
+                  <p className="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-1">ðŸ’¡ Why It Exists</p>
                   <p className="text-[11px] text-zinc-700 font-medium leading-relaxed">{scope.why_it_exists}</p>
                 </div>
               )}
               {scope?.how_it_all_connects && (
                 <div className="p-3.5 bg-emerald-50 border border-emerald-100 rounded-xl">
-                  <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1">🔗 How It Connects</p>
+                  <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1">ðŸ”— How It Connects</p>
                   <p className="text-[11px] text-zinc-700 font-medium leading-relaxed">{scope.how_it_all_connects}</p>
                 </div>
               )}
@@ -310,7 +310,7 @@ function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
                       className="w-full flex items-center justify-between px-4 py-3 bg-zinc-50 hover:bg-zinc-100 transition-colors">
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${color}`}/>
-                        <span className="text-[10px] font-black text-zinc-700 uppercase">Tier {tier} · {label}</span>
+                        <span className="text-[10px] font-black text-zinc-700 uppercase">Tier {tier} Â· {label}</span>
                         <span className="px-1.5 py-0.5 bg-white border border-zinc-200 rounded text-[8px] font-black text-zinc-400">{count}</span>
                       </div>
                       {openTier===tier ? <ChevronDown size={12} className="text-zinc-400"/> : <ChevronRight size={12} className="text-zinc-400"/>}
@@ -331,7 +331,7 @@ function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
             </div>
             {scope?.good_for_learning?.length > 0 && (
               <div className="p-4 bg-violet-50 border border-violet-100 rounded-xl">
-                <p className="text-[8px] font-black text-violet-500 uppercase tracking-widest mb-2">📚 Good for Learning</p>
+                <p className="text-[8px] font-black text-violet-500 uppercase tracking-widest mb-2">ðŸ“š Good for Learning</p>
                 <div className="flex flex-wrap gap-1.5">
                   {scope.good_for_learning.map((c,i) => (
                     <span key={i} className="px-2.5 py-1 bg-white border border-violet-200 rounded-lg text-[9px] font-black text-violet-700">{c}</span>
@@ -341,7 +341,7 @@ function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
             )}
             {scope?.strengths?.length > 0 && (
               <div className="p-4 bg-zinc-50 border border-zinc-100 rounded-xl">
-                <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-2">⚡ Strengths</p>
+                <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-2">âš¡ Strengths</p>
                 <div className="space-y-1.5">
                   {scope.strengths.map((s,i) => (
                     <div key={i} className="flex items-start gap-2">
@@ -359,11 +359,11 @@ function ScopePanel({ onClose, repoName, activeRepoUrl, nodes }) {
   );
 }
 
-// ─── CHAT PANEL ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ CHAT PANEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ChatPanel({ onClose, repoName, activeRepoUrl }) {
   const [messages, setMessages] = useState([{
     role: "assistant",
-    text: `Hey! I'm Sentinel 👋 Ask me anything about **${repoName}** — where things live, how parts connect, what a file does, or where to start contributing. Plain English, no jargon.`,
+    text: `Hey! I'm Sentinel ðŸ‘‹ Ask me anything about **${repoName}** â€” where things live, how parts connect, what a file does, or where to start contributing. Plain English, no jargon.`,
   }]);
   const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(false);
@@ -401,7 +401,7 @@ function ChatPanel({ onClose, repoName, activeRepoUrl }) {
     <div className="w-[460px] bg-white border-l border-zinc-100 flex flex-col shadow-2xl h-full">
       <div className="px-6 py-5 flex justify-between items-center bg-emerald-600 text-white shrink-0">
         <div>
-          <p className="text-[9px] font-black uppercase tracking-widest text-emerald-200 mb-1">💬 Ask Sentinel</p>
+          <p className="text-[9px] font-black uppercase tracking-widest text-emerald-200 mb-1">ðŸ’¬ Ask Sentinel</p>
           <h2 className="font-black text-base tracking-tighter uppercase italic truncate max-w-[320px]">{repoName}</h2>
         </div>
         <button onClick={onClose} className="p-2 hover:bg-emerald-700 rounded-xl text-emerald-200"><X size={15}/></button>
@@ -439,7 +439,7 @@ function ChatPanel({ onClose, repoName, activeRepoUrl }) {
             </div>
             <div className="bg-zinc-50 border border-zinc-100 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2">
               <Loader2 size={12} className="animate-spin text-zinc-400"/>
-              <span className="text-[10px] text-zinc-400 font-medium">Thinking…</span>
+              <span className="text-[10px] text-zinc-400 font-medium">Thinkingâ€¦</span>
             </div>
           </div>
         )}
@@ -450,7 +450,7 @@ function ChatPanel({ onClose, repoName, activeRepoUrl }) {
         <div className="flex gap-2">
           <input value={input} onChange={e=>setInput(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()}
-            placeholder="Ask anything about this codebase…" disabled={loading}
+            placeholder="Ask anything about this codebaseâ€¦" disabled={loading}
             className="flex-1 border-2 border-zinc-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:border-emerald-400 transition-colors disabled:opacity-50"
           />
           <button onClick={()=>send()} disabled={loading||!input.trim()}
@@ -463,7 +463,7 @@ function ChatPanel({ onClose, repoName, activeRepoUrl }) {
   );
 }
 
-// ─── Shared loading state ─────────────────────────────────────────────────────
+// â”€â”€â”€ Shared loading state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function LoadingState({ label, sub }) {
   return (
     <div className="flex flex-col items-center justify-center h-56 gap-4">
@@ -476,7 +476,7 @@ function LoadingState({ label, sub }) {
   );
 }
 
-// ─── MAIN REVEAL ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ MAIN REVEAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function RevealContent() {
   const { revelationData, activePanel, setActivePanel, activeRepoUrl, clearRevelation } = useStore();
 
@@ -516,7 +516,7 @@ function RevealContent() {
     return (source.edges||[]).map((e,i) => ({ ...e, id: e.id||`e_${i}` }));
   }, [source]);
 
-  // ── Tier-by-tier reveal (no fitView mid-reveal) ───────────────────────────
+  // â”€â”€ Tier-by-tier reveal (no fitView mid-reveal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!source) return;
     setNodes([]); setEdges([]); setIsBuilding(true); setBuiltTiers([]);
@@ -559,7 +559,7 @@ function RevealContent() {
     return () => clearTimeout(t);
   }, [source]);
 
-  // ── Collapse node ─────────────────────────────────────────────────────────
+  // â”€â”€ Collapse node â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const collapseNode = useCallback((nid) => {
     setNodes(prev =>
       prev.filter(n => !n.id.startsWith(`${nid}_`))
@@ -569,7 +569,7 @@ function RevealContent() {
     setExpandedId(null);
   }, []);
 
-  // ── Node click: auto-collapse prev, expand new ────────────────────────────
+  // â”€â”€ Node click: auto-collapse prev, expand new â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const onNodeClick = useCallback(async (event, node) => {
     const tier     = node.data?.tier ?? 0;
     const isDetail = node.data?.isDetail;
@@ -577,10 +577,10 @@ function RevealContent() {
 
     const nid = node.id;
 
-    // Same node → collapse
+    // Same node â†’ collapse
     if (expandedId === nid) { collapseNode(nid); return; }
 
-    // Auto-collapse previous — NO fitView
+    // Auto-collapse previous â€” NO fitView
     if (expandedId) collapseNode(expandedId);
 
     setLoadingId(nid);
@@ -600,7 +600,7 @@ function RevealContent() {
       setEdges(prev => [...prev, ...dEdges]);
       setExpandedId(nid);
 
-      // Pan gently to the clicked node — NO fitView (keeps zoom level intact)
+      // Pan gently to the clicked node â€” NO fitView (keeps zoom level intact)
       setCenter(
         node.position.x + NODE_W / 2,
         node.position.y + 300,
@@ -611,10 +611,10 @@ function RevealContent() {
     } finally { setLoadingId(null); }
   }, [expandedId, loadingId, activeRepoUrl, collapseNode, setCenter]);
 
-  // ── Flow simulation ───────────────────────────────────────────────────────
+  // â”€â”€ Flow simulation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const startSimulation = useCallback(() => {
     if (simulating) {
-      // Stop simulation — reset all edges
+      // Stop simulation â€” reset all edges
       simTimers.current.forEach(clearTimeout);
       simTimers.current = [];
       setSimulating(false);
@@ -696,16 +696,16 @@ function RevealContent() {
         <div className="flex items-center gap-2">
           {loadingId && (
             <span className="flex items-center text-[9px] font-black text-blue-500 uppercase tracking-widest animate-pulse">
-              <Loader2 size={9} className="animate-spin mr-1"/> Expanding…
+              <Loader2 size={9} className="animate-spin mr-1"/> Expandingâ€¦
             </span>
           )}
           {isBuilding ? (
             <span className="flex items-center text-[9px] font-black text-blue-500 uppercase tracking-widest animate-pulse">
-              <Loader2 size={9} className="animate-spin mr-1"/> Building map…
+              <Loader2 size={9} className="animate-spin mr-1"/> Building mapâ€¦
             </span>
           ) : (
             <span className="flex items-center text-[9px] font-black text-emerald-500 uppercase tracking-widest">
-              <ShieldCheck size={9} className="mr-1"/> {sortedNodes.length} nodes · click to explore
+              <ShieldCheck size={9} className="mr-1"/> {sortedNodes.length} nodes Â· click to explore
             </span>
           )}
 
@@ -750,9 +750,9 @@ function RevealContent() {
           ))}
         </div>
 
-        {/* Canvas — flex-1 ensures it never shrinks when panel opens */}
+        {/* Canvas â€” flex-1 ensures it never shrinks when panel opens */}
         <div className="flex-1 relative min-w-0">
-          {/* Simulation widget — top right */}
+          {/* Simulation widget â€” top right */}
           <div className="absolute top-4 right-4 z-50">
             <SimulationWidget />
           </div>
@@ -780,7 +780,7 @@ function RevealContent() {
           </ReactFlow>
         </div>
 
-        {/* Side Panels — absolute so they DON'T affect canvas width */}
+        {/* Side Panels â€” absolute so they DON'T affect canvas width */}
         {activePanel === "guide" && (
           <div className="absolute right-0 top-0 bottom-0 z-50 shadow-2xl">
             <GuidePanel onClose={()=>setActivePanel(null)} repoName={repoName} activeRepoUrl={activeRepoUrl} nodes={sortedNodes}/>
@@ -823,4 +823,6 @@ function DeckButton({ icon, onClick, active, label }) {
 export default function RevealPage() {
   return <ReactFlowProvider><RevealContent /></ReactFlowProvider>;
 }
+
+
 
